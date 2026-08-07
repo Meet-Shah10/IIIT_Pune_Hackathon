@@ -1,62 +1,81 @@
-import { useState } from 'react'
-import { Plus, Edit2, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Plus, Edit2, Trash2, LoaderCircle } from 'lucide-react'
 import { PrivacyAssessmentModal } from '../components/dashboard/PrivacyAssessmentModal'
-
-const mockTimelineData = [
-  {
-    dateGroup: 'TODAY',
-    commits: [
-      {
-        id: 'MEM-842-A',
-        hash: '#9f8a2b1',
-        timeAgo: '2 hours ago',
-        action: 'CREATED',
-        icon: 'plus',
-        title: 'Emergency Contact Info',
-        diffs: [
-          { type: 'add', text: '+ "My emergency contact is my partner, Alex. Their number is 555-019-8372."' }
-        ],
-        sensitivity: 'High',
-        ttl: 'Indefinite'
-      },
-      {
-        id: 'MEM-841-X',
-        hash: '#3c4d5e6',
-        timeAgo: '5 hours ago',
-        action: 'UPDATED',
-        icon: 'edit',
-        title: 'Dietary Preference: Coffee',
-        diffs: [
-          { type: 'remove', text: '- Prefers light roast coffee.' },
-          { type: 'add', text: '+ Prefers dark roast coffee, specifically Italian blends.' }
-        ],
-        sensitivity: 'Low',
-        ttl: 'Retained Indefinitely'
-      }
-    ]
-  },
-  {
-    dateGroup: 'YESTERDAY',
-    commits: [
-      {
-        id: 'MEM-810-C',
-        hash: '#7a8b9c0',
-        timeAgo: 'Yesterday, 14:30',
-        action: 'EXPIRED',
-        icon: 'trash',
-        title: 'Temporary Access Code',
-        diffs: [
-          { type: 'remove', text: '- Access code for building 4 is 9482.' }
-        ],
-        sensitivity: 'Medium',
-        ttl: 'Content purged according to 24-hour retention policy.'
-      }
-    ]
-  }
-]
+import { api } from '../lib/api'
 
 export default function MemoryTimeline() {
   const [selectedMemory, setSelectedMemory] = useState(null)
+  const [timelineEvents, setTimelineEvents] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadTimeline = async () => {
+      try {
+        const data = await api.getEvents()
+        if (isMounted) {
+          setTimelineEvents(Array.isArray(data) ? data : [])
+        }
+      } catch (error) {
+        console.error('Failed to load memory timeline:', error)
+        if (isMounted) {
+          setTimelineEvents([])
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadTimeline()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const groupedTimeline = (() => {
+    const groups = timelineEvents.reduce((acc, event) => {
+      const createdAt = new Date(event.savedAt || event.createdAt || Date.now())
+      const dateKey = createdAt.toDateString()
+      const groupLabel = createdAt.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+
+      if (!acc[dateKey]) {
+        acc[dateKey] = { dateGroup: groupLabel, commits: [] }
+      }
+
+      acc[dateKey].commits.push({
+        id: event._id || event.memoryId,
+        hash: `#${String(event._id || event.memoryId || '').slice(-6)}`,
+        timeAgo: createdAt.toLocaleString(),
+        action: (event.action || 'updated').toUpperCase(),
+        icon: event.action === 'forgotten' ? 'trash' : event.action === 'updated' ? 'edit' : 'plus',
+        title: event.memoryContent || event.detail || 'Memory event',
+        diffs: [
+          {
+            type: 'add',
+            text: `+ ${event.detail || event.reason || 'No detail available'}`,
+          },
+        ],
+        sensitivity: (event.memorySensitivity || event.memory?.sensitivity || 'low').toLowerCase(),
+        ttl: event.memory?.status || 'active',
+        reason: event.reason || '',
+        detail: event.detail || '',
+        memory: event.memory || null,
+        createdAt: createdAt.toISOString(),
+      })
+
+      return acc
+    }, {})
+
+    return Object.values(groups).sort((a, b) => new Date(b.commits[0]?.createdAt || 0) - new Date(a.commits[0]?.createdAt || 0))
+  })()
 
   const getActionBadge = (action) => {
     switch (action) {
@@ -77,12 +96,13 @@ export default function MemoryTimeline() {
   }
 
   const getSensitivityButton = (sensitivity) => {
-    switch (sensitivity) {
-      case 'High':
+    switch ((sensitivity || '').toLowerCase()) {
+      case 'high':
+      case 'critical':
         return 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
-      case 'Medium':
+      case 'medium':
         return 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-      case 'Low':
+      case 'low':
       default:
         return 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
     }
@@ -100,9 +120,17 @@ export default function MemoryTimeline() {
       <div className="max-w-4xl mx-auto relative pl-4">
         <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-zinc-200/80"></div>
 
-        <div className="space-y-12 relative">
-          {mockTimelineData.map((group, gIdx) => (
-            <div key={gIdx}>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-zinc-500">
+            <LoaderCircle className="w-4 h-4 animate-spin" />
+            Loading timeline events...
+          </div>
+        ) : groupedTimeline.length === 0 ? (
+          <div className="text-sm text-zinc-500">No real memory timeline events are available yet.</div>
+        ) : (
+          <div className="space-y-12 relative">
+            {groupedTimeline.map((group, gIdx) => (
+              <div key={`${group.dateGroup}-${gIdx}`}>
               
               {/* Date Header */}
               <div className="flex items-center gap-4 mb-8">
@@ -154,9 +182,9 @@ export default function MemoryTimeline() {
                             </div>
                           ))}
                         </div>
-                        {commit.action === 'EXPIRED' && (
-                          <div className="mt-4 text-sm text-zinc-500 italic">
-                            {commit.ttl}
+                        {commit.reason && (
+                          <div className="mt-4 text-sm text-zinc-500">
+                            Reason: {commit.reason}
                           </div>
                         )}
                       </div>
@@ -170,11 +198,21 @@ export default function MemoryTimeline() {
                         
                         {/* Clickable Sensitivity Tag to trigger modal */}
                         <button 
-                          onClick={() => setSelectedMemory({ id: commit.id, sensitivity: commit.sensitivity, timestamp: commit.timeAgo })}
+                          onClick={() => setSelectedMemory({
+                            id: commit.id,
+                            content: commit.title,
+                            sensitivity: commit.sensitivity,
+                            timestamp: commit.timeAgo,
+                            category: commit.memory?.category || 'general',
+                            reason: commit.reason,
+                            status: commit.memory?.status || commit.ttl || 'active',
+                            createdAt: commit.createdAt,
+                            detail: commit.detail,
+                          })}
                           className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-colors ${getSensitivityButton(commit.sensitivity)} flex items-center gap-1.5`}
                         >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                          {commit.sensitivity} PII
+                          {commit.sensitivity} sensitivity
                         </button>
                       </div>
 
@@ -183,9 +221,10 @@ export default function MemoryTimeline() {
                 ))}
               </div>
               
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modal Render */}

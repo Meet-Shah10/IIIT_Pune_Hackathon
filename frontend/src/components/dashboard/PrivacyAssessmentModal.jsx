@@ -3,6 +3,19 @@ import { ArrowLeft, ShieldAlert, FileType, Hourglass, Lock, Trash2, Fingerprint,
 export function PrivacyAssessmentModal({ memory, onClose }) {
   if (!memory) return null;
 
+  const normalizedSensitivity = (memory.sensitivity || 'low').toString().toLowerCase();
+  const sensitivityLabel = normalizedSensitivity.charAt(0).toUpperCase() + normalizedSensitivity.slice(1);
+  const riskLevel = normalizedSensitivity === 'critical' || normalizedSensitivity === 'high'
+    ? 'High'
+    : normalizedSensitivity === 'medium'
+      ? 'Medium'
+      : 'Low';
+  const storageDuration = memory.status === 'forgotten'
+    ? 'Revoked'
+    : memory.status === 'expired'
+      ? 'Expired'
+      : 'Active retention';
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/20 backdrop-blur-sm transition-all duration-300">
       
@@ -20,7 +33,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
           
           <h2 className="text-3xl font-semibold text-zinc-900 tracking-tight">Privacy & Sensitivity Assessment</h2>
           <p className="text-sm text-zinc-500 mt-2 leading-relaxed">
-            Detailed analysis of stored memory node <span className="bg-zinc-100 px-1.5 py-0.5 rounded font-mono text-xs">{memory.id}</span>. Review classification and manage retention policies.
+            Detailed analysis of stored memory node <span className="bg-zinc-100 px-1.5 py-0.5 rounded font-mono text-xs">{memory.id}</span>. Review classification and retention details from the real event payload.
           </p>
         </div>
 
@@ -35,7 +48,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
             </div>
             <div className="bg-zinc-50/80 border border-zinc-100 rounded-xl p-6 shadow-inner">
               <p className="text-lg text-zinc-800 leading-relaxed font-medium">
-                "My emergency contact is my partner, Alex. Their number is <span className="bg-red-100/50 text-red-700 px-1.5 py-0.5 rounded font-mono">555-019-8372</span>."
+                {memory.content || memory.detail || 'No memory content was provided.'}
               </p>
             </div>
           </div>
@@ -50,7 +63,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-rose-700 mb-2 tracking-wide">
                   <ShieldAlert className="w-3.5 h-3.5" /> Sensitivity
                 </div>
-                <div className="text-lg font-semibold text-rose-700">High / PII</div>
+                <div className="text-lg font-semibold text-rose-700">{sensitivityLabel}</div>
               </div>
 
               {/* Box 2 */}
@@ -58,7 +71,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
                   <FileType className="w-3.5 h-3.5" /> Data Type
                 </div>
-                <div className="text-lg font-medium text-zinc-900">Contact<br/>Info</div>
+                <div className="text-lg font-medium text-zinc-900">{memory.category || 'general'}</div>
               </div>
 
               {/* Box 3 */}
@@ -66,7 +79,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
                   <Hourglass className="w-3.5 h-3.5" /> Storage Duration
                 </div>
-                <div className="text-lg font-medium text-zinc-900">Indefinite</div>
+                <div className="text-lg font-medium text-zinc-900">{storageDuration}</div>
               </div>
 
               {/* Box 4 */}
@@ -74,7 +87,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
                   <Lock className="w-3.5 h-3.5" /> Access Scope
                 </div>
-                <div className="text-lg font-medium text-zinc-900">LLM<br/>Internal</div>
+                <div className="text-lg font-medium text-zinc-900">{memory.reason ? 'Context-based recall' : 'Not recorded'}</div>
               </div>
             </div>
           </div>
@@ -84,10 +97,10 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
             <div className="absolute top-0 left-0 w-1 h-full bg-rose-400"></div>
             <div className="flex items-center gap-2 mb-3">
               <ShieldAlert className="w-4 h-4 text-rose-600" />
-              <h4 className="text-xs font-bold uppercase text-rose-700 tracking-wider">Risk Assessment: High</h4>
+              <h4 className="text-xs font-bold uppercase text-rose-700 tracking-wider">Risk Assessment: {riskLevel}</h4>
             </div>
             <p className="text-sm text-rose-800/80 leading-relaxed">
-              This memory node contains direct Personally Identifiable Information (PII), specifically a standard-format telephone number associated with a named individual ("Alex"). Storing explicit contact information elevates the risk profile for targeted exposure. It is recommended to apply zero-knowledge encryption or anonymization if this data is not critical for immediate contextual recall.
+              {memory.reason ? `This memory was stored because: ${memory.reason}` : 'This memory does not include a recorded reason in the current event payload.'}
             </p>
           </div>
 
