@@ -1,7 +1,40 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Plus, Mic, ArrowUp, Cpu, Copy, Edit3, Trash2, RefreshCw, Database, UserCheck } from 'lucide-react'
-import { MemoryInterceptCard } from './MemoryInterceptCard'
+import { Plus, Mic, ArrowUp, Cpu, Copy, Edit3, Trash2, RefreshCw, Database, UserCheck, X } from 'lucide-react'
+
 import LanguageSelector from '../ui/LanguageSelector'
+
+function MiniMascot() {
+  return (
+    <div className="relative w-8 h-8 flex-shrink-0 animate-bounce" style={{ animationDuration: '3s', animationTimingFunction: 'ease-in-out' }}>
+      {/* Soft background glow */}
+      <div className="absolute inset-0.5 rounded-full bg-zinc-200/50 blur-sm animate-pulse"></div>
+
+      {/* Cute bot SVG */}
+      <svg className="w-8 h-8 relative z-10 text-zinc-100" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Antennas */}
+        <path d="M24 10V6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="24" cy="5" r="2.5" fill="#f43f5e" className="animate-pulse" />
+
+        {/* Head */}
+        <rect x="8" y="10" width="32" height="28" rx="14" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
+
+        {/* Face Screen */}
+        <rect x="12" y="14" width="24" height="20" rx="10" fill="#27272a" stroke="#52525b" strokeWidth="1" />
+
+        {/* Happy Eyes */}
+        <path d="M16 23C16 22 17 21 18 21C19 21 20 22 20 23" stroke="#a1a1aa" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M28 23C28 22 29 21 30 21C31 21 32 22 32 23" stroke="#a1a1aa" strokeWidth="2.5" strokeLinecap="round" />
+
+        {/* Rosy Cheeks */}
+        <circle cx="15" cy="27" r="1.5" fill="#f43f5e" opacity="0.8" />
+        <circle cx="33" cy="27" r="1.5" fill="#f43f5e" opacity="0.8" />
+
+        {/* Smile */}
+        <path d="M21 28C22 29 23.5 29.5 24 29.5C24.5 29.5 26 29 27 28" stroke="#f4f4f5" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </div>
+  )
+}
 
 export default function ChatWindow({ messages, events, isLoading, onSendMessage }) {
   const [inputValue, setInputValue] = useState('')
@@ -9,6 +42,43 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
   const [useProfile, setUseProfile] = useState(true)
   const endRef = useRef(null)
   const textareaRef = useRef(null)
+  const [showMascotReminder, setShowMascotReminder] = useState(true)
+  const isFirstRender = useRef(true)
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("Memory toggle is on. I will save your important facts.");
+        utterance.rate = 1.05;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+      }
+      return;
+    }
+
+    setShowMascotReminder(true);
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const text = storeMemories
+        ? "Memory toggle is back on."
+        : "Memory toggle is off. No memory is being recorded.";
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      utterance.pitch = 1.1;
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [storeMemories]);
+
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -40,7 +110,7 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
 
   const renderMessageWithEvents = (msg, index) => {
     const relatedEvents = events.filter(e => e.action === 'extracted' && e.detail.includes(msg.content))
-    
+
     if (msg.role === 'assistant') {
       return (
         <div key={msg._id || index} className="flex flex-col gap-2 w-full mt-4 group">
@@ -48,13 +118,13 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
             <div className="flex-shrink-0 mt-1">
               <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center bg-white text-zinc-800">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                 </svg>
               </div>
             </div>
             <div className="flex flex-col gap-2 pt-1.5 text-zinc-800 text-[15px] leading-relaxed max-w-[85%]">
               <p>{msg.content}</p>
-              
+
               {/* Assistant Hover Actions */}
               <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button className="text-zinc-400 hover:text-zinc-600 transition-colors" title="Copy">
@@ -64,13 +134,8 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
                   <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
-            </div>
           </div>
-          {relatedEvents.map(ev => (
-            <div key={ev._id} className="pl-12">
-              <MemoryInterceptCard detail={ev.detail} category="fact" sensitivity="medium" />
-            </div>
-          ))}
+        </div>
         </div>
       )
     }
@@ -80,7 +145,7 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
         <div className="bg-zinc-100/80 border border-zinc-200/50 rounded-2xl rounded-tr-sm px-4 py-3 text-zinc-800 text-[15px] shadow-sm">
           <p>{msg.content}</p>
         </div>
-        
+
         {/* User Hover Actions */}
         <div className="flex items-center justify-end gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button className="text-zinc-400 hover:text-zinc-600 transition-colors" title="Edit">
@@ -99,41 +164,61 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
 
   return (
     <div className="flex flex-col h-full relative w-full pt-16">
-      
+
       {/* Active Context Header (Pinned Toggles) — fixed so it never scrolls away */}
       <div className="fixed top-4 left-0 md:left-64 right-0 flex justify-center z-[60] pointer-events-none">
-        <div className="pointer-events-auto bg-white/80 backdrop-blur-md border border-zinc-200 shadow-sm rounded-full px-5 py-2.5 flex items-center gap-6">
-          
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <div className="relative">
-              <input type="checkbox" className="sr-only" checked={storeMemories} onChange={() => setStoreMemories(!storeMemories)} />
-              <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${storeMemories ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
-              <div className={`absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transform transition-transform duration-300 ease-in-out ${storeMemories ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
+        <div className="pointer-events-auto flex flex-col items-center gap-2">
+          {/* Toggles bar */}
+          <div className="bg-white/80 backdrop-blur-md border border-zinc-200 shadow-sm rounded-full px-5 py-2.5 flex items-center gap-6">
+
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative">
+                <input type="checkbox" className="sr-only" checked={storeMemories} onChange={() => setStoreMemories(!storeMemories)} />
+                <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${storeMemories ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
+                <div className={`absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transform transition-transform duration-300 ease-in-out ${storeMemories ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
+                <Database className="w-3.5 h-3.5" />
+                <span>Save Memory</span>
+              </div>
+            </label>
+
+            <div className="w-px h-4 bg-zinc-200"></div>
+
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative">
+                <input type="checkbox" className="sr-only" checked={useProfile} onChange={() => setUseProfile(!useProfile)} />
+                <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${useProfile ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
+                <div className={`absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transform transition-transform duration-300 ease-in-out ${useProfile ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>Use Memory</span>
+              </div>
+            </label>
+
+          </div>
+
+          {/* Mascot Reminder Bubble */}
+          {showMascotReminder && (
+            <div className="bg-white border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl px-4 py-2 flex items-center gap-3 max-w-sm mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+              <MiniMascot />
+              <div className="flex-1 text-xs text-zinc-700 leading-tight">
+                {storeMemories ? (
+                  <span><strong>Memory is On:</strong> I am active and saving your important facts.</span>
+                ) : (
+                  <span><strong>Memory is Off:</strong> No memory is being recorded.</span>
+                )}
+              </div>
+              <button
+                onClick={() => setShowMascotReminder(false)}
+                className="text-zinc-400 hover:text-zinc-600 transition-colors p-0.5 hover:bg-zinc-100 rounded-full cursor-pointer flex items-center justify-center"
+                title="Dismiss"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
-              <Database className="w-3.5 h-3.5" />
-              <span>Save Memory</span>
-            </div>
-          </label>
-
-          <div className="w-px h-4 bg-zinc-200"></div>
-
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <div className="relative">
-              <input type="checkbox" className="sr-only" checked={useProfile} onChange={() => setUseProfile(!useProfile)} />
-              <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${useProfile ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
-              <div className={`absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transform transition-transform duration-300 ease-in-out ${useProfile ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>Use Memory</span>
-            </div>
-          </label>
-
-          <div className="w-px h-4 bg-zinc-200"></div>
-
-          <LanguageSelector />
-
+          )}
         </div>
       </div>
 
@@ -147,20 +232,20 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
       {/* Message List */}
       <div className="flex flex-col gap-2 w-full pb-36 pt-4">
         {messages.map((msg, idx) => renderMessageWithEvents(msg, idx))}
-        
+
         {isLoading && (
           <div className="flex gap-4 mt-4 opacity-50">
             <div className="flex-shrink-0 mt-1">
               <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center bg-white text-zinc-800 animate-pulse">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                 </svg>
               </div>
             </div>
             <div className="pt-3 flex gap-1.5">
               <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" />
-              <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
-              <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}} />
+              <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+              <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
             </div>
           </div>
         )}
@@ -171,8 +256,8 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
       <div className="fixed bottom-6 left-0 md:left-64 right-0 px-4 md:px-8 z-40 flex justify-center pointer-events-none">
         <div className="w-full max-w-3xl pointer-events-auto">
           <form onSubmit={handleSubmit} className="relative flex flex-col bg-white border border-zinc-200 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-zinc-300 focus-within:shadow-[0_12px_40px_rgb(0,0,0,0.12)] transition-all duration-200">
-            
-            <textarea 
+
+            <textarea
               ref={textareaRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -182,19 +267,19 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
                   handleSubmit(e)
                 }
               }}
-              className="w-full bg-transparent border-0 pt-4 pb-2 px-4 text-base text-zinc-900 placeholder-zinc-400 focus:ring-0 focus:outline-none resize-none overflow-y-auto no-scrollbar" 
+              className="w-full bg-transparent border-0 pt-4 pb-2 px-4 text-base text-zinc-900 placeholder-zinc-400 focus:ring-0 focus:outline-none resize-none overflow-y-auto no-scrollbar"
               style={{ minHeight: '28px', maxHeight: '200px' }}
-              placeholder="Ask anything..." 
+              placeholder="Ask anything..."
               rows={1}
             />
-            
+
             <div className="flex items-center justify-between px-3 pb-3 pt-1">
               <div className="flex items-center gap-2">
                 <button type="button" className="p-2 text-zinc-400 hover:text-zinc-700 bg-zinc-50 hover:bg-zinc-100 rounded-full transition-colors flex items-center gap-1.5">
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <button type="button" className="p-2 text-zinc-400 hover:text-zinc-700 transition-colors">
                   <Mic className="w-4 h-4" />

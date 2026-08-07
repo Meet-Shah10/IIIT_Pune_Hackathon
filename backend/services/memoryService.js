@@ -1,6 +1,6 @@
 const { chatCompletion } = require('../config/nvidia');
 
-async function extractMemoryAndRespond(message, systemPrompt = '') {
+async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory = []) {
     // Build messages array – prepend context system prompt if provided
     const messages = [];
 
@@ -16,7 +16,7 @@ async function extractMemoryAndRespond(message, systemPrompt = '') {
   "reply": "Conversational response",
   "negotiation_prompt": {
     "content": "Normalized 3rd-person fact (e.g., 'User lives in Pune')",
-    "category": "health|preference|habit|personal_details|misc",
+    "category": "health|preference|habit|personal_details|educational|misc",
     "reason": "Brief extraction reason"
   }
 }
@@ -25,9 +25,18 @@ Rules:
 2. Ignore transient requests, temporary states, or standard chitchat.
 3. If no durable fact exists, set "negotiation_prompt" to null.
 4. Adhere strictly to any Language directive specified in the prompt for the "reply" field.`
-        },
-        { role: 'user', content: message }
+        }
     );
+
+    // Prepend recent conversation history (last 10-15 messages)
+    for (const msg of recentHistory) {
+        if (msg.role && msg.content) {
+            messages.push({ role: msg.role, content: msg.content });
+        }
+    }
+
+    // Append current user message
+    messages.push({ role: 'user', content: message });
 
     // Use shared chatCompletion helper for consistent configuration
     const content = await chatCompletion(messages, {

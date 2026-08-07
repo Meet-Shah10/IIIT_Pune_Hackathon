@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MapPin, BrainCircuit, PlaneTakeoff, Navigation } from 'lucide-react'
+import { MapPin, BrainCircuit, PlaneTakeoff } from 'lucide-react'
 
 export function MemoryInterceptCard({ detail, category, sensitivity }) {
   const [active, setActive] = useState(true)

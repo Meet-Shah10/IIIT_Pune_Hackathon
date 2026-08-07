@@ -21,7 +21,8 @@ export default function ChatPage() {
 
   useEffect(() => {
     api.getMemories(userId).then(setMemories).catch(console.error);
-  }, [userId]);
+    api.getChatHistory(sessionId).then(setMessages).catch(console.error);
+  }, [userId, sessionId]);
 
   // We need to keep track of events to simulate the "intercept card" inline
   const { data: events = [] } = useQuery({
@@ -44,14 +45,35 @@ export default function ChatPage() {
       };
       setMessages(prev => [...prev, errorMsg]);
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // Append assistant reply to chat history
       const replyContent = data?.reply ?? data?.message;
       if (replyContent) {
+        let negotiationPrompt = data?.negotiation_prompt;
+        
+        // Mock negotiation_prompt for demonstration words on frontend
+        const userMsgLower = variables?.content?.toLowerCase() || '';
+        if (!negotiationPrompt && (
+          userMsgLower.includes('remember') || 
+          userMsgLower.includes('mascot') || 
+          userMsgLower.includes('trip') || 
+          userMsgLower.includes('pune') || 
+          userMsgLower.includes('hello') ||
+          userMsgLower.includes('hi') ||
+          userMsgLower.includes('robot')
+        )) {
+          negotiationPrompt = {
+            content: `User shared: "${variables.content}"`,
+            category: 'personal_details',
+            sensitivity: 'low'
+          };
+        }
+
         const assistantMsg = {
           _id: `assistant-${Date.now()}`,
           role: 'assistant',
           content: replyContent,
+          negotiationPrompt: negotiationPrompt || null,
           createdAt: new Date().toISOString(),
         };
         setMessages(prev => [...prev, assistantMsg]);

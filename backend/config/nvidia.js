@@ -38,9 +38,7 @@ async function chatCompletion(messages, options = {}) {
 module.exports = {
     // Base endpoint for chat completions (used in memoryService)
     BASE_URL: 'https://integrate.api.nvidia.com/v1/chat/completions',
-    // Default model used for chat + memory extraction
     DEFAULT_MODEL: 'meta/llama-3.1-8b-instruct',
-    // API key – pulled from process.env at runtime
     API_KEY: process.env.NVIDIA_API_KEY,
     chatCompletion,
 };
