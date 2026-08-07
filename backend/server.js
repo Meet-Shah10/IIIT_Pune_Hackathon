@@ -66,8 +66,21 @@ app.post('/api/chat', async (req, res) => {
     const replyContent = extracted?.reply || extracted?.message || extracted?.response || 'I am processing your request.';
 
     // 4️⃣ Save User's new message and AI's response back to MongoDB
-    await Message.create({ userId, sessionId, role: 'user', content: message });
-    await Message.create({ userId, sessionId, role: 'assistant', content: replyContent });
+    await Message.create({
+      sessionId,
+      role: 'user',
+      content: message,
+      createdAt: new Date(),
+      wasFactExtracted: Boolean(extracted?.negotiation_prompt),
+    });
+
+    await Message.create({
+      sessionId,
+      role: 'assistant',
+      content: replyContent,
+      createdAt: new Date(),
+      wasFactExtracted: false,
+    });
 
     // 5️⃣ If memory enabled and a negotiation_prompt exists, classify & store
     let memorySaved = false;
