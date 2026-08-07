@@ -1,2 +1,20 @@
-// TODO: Phase 1 — Message.js Mongoose schema
-// { _id, userId, role: "user"|"assistant", content, createdAt }
+import mongoose from 'mongoose'
+
+const messageSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  role: {
+    type: String,
+    enum: ['user', 'assistant', 'system'],
+    required: true,
+  },
+  content: {
+    type: String,
+    required: true,
+  }
+}, { timestamps: true })
+
+export default mongoose.model('Message', messageSchema)

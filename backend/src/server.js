@@ -1,13 +1,33 @@
-import app from './app.js'
-import { connectDB } from './services/dbService.js'
+import express from 'express'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import mongoose from 'mongoose'
+import chatRoutes from './routes/chatRoutes.js'
+import memoryRoutes from './routes/memoryRoutes.js'
 
+dotenv.config()
+
+const app = express()
+
+// Middleware
+app.use(cors())
+app.use(express.json())
+
+// Routes
+app.use('/api/chat', chatRoutes)
+app.use('/api/memories', memoryRoutes)
+
+// DB Connection & Server Start
 const PORT = process.env.PORT || 5000
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/memcommit'
 
-const start = async () => {
-  await connectDB()
-  app.listen(PORT, () => {
-    console.log(`[INFO] Server running on port ${PORT}`)
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('✅ Connected to MongoDB')
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`)
+    })
   })
-}
-
-start()
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err)
+  })
