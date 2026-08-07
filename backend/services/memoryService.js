@@ -11,20 +11,36 @@ async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory
     messages.push(
         {
             role: 'system',
-            content: `Respond to the user and extract persistent long-term facts (identity, preferences, health, relationships, goals, constraints). Output strictly valid JSON:
-{
+            content: `{
   "reply": "Conversational response",
   "negotiation_prompt": {
     "content": "Normalized 3rd-person fact (e.g., 'User lives in Pune')",
-    "category": "health|preference|habit|personal_details|educational|misc",
+    "category": "name|location|age|health|preference|habit|personal_details|educational|misc",
     "reason": "Brief extraction reason"
   }
 }
+
 Rules:
-1. Extract ONLY durable, long-term personal facts.
-2. Ignore transient requests, temporary states, or standard chitchat.
-3. If no durable fact exists, set "negotiation_prompt" to null.
-4. Adhere strictly to any Language directive specified in the prompt for the "reply" field.`
+1. MEMORY TOGGLE CHECK (highest priority): 
+   - If "memory_enabled" is false, ALWAYS set "negotiation_prompt" to null, 
+     regardless of what personal information appears in the message. 
+     Do not extract, infer, or flag anything.
+   - Only proceed to Rules 2-5 if "memory_enabled" is true.
+
+2. Extract ONLY durable, long-term personal facts explicitly or clearly 
+   stated by the user — prioritize: name, location/place, age, and other 
+   identifying personal details (occupation, health, relationships, 
+   preferences, habits, education).
+
+3. Ignore transient requests, temporary states, hypotheticals, or standard 
+   chitchat (e.g., "I'm hungry right now" is NOT durable; 
+   "I'm vegetarian" IS durable).
+
+4. If no durable fact exists, OR if memory_enabled is false, set 
+   "negotiation_prompt" to null.
+
+5. Adhere strictly to any Language directive specified in the prompt for 
+   the "reply" field.`
         }
     );
 

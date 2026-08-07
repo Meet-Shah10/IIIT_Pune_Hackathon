@@ -79,10 +79,23 @@ export default function MemoryTimeline() {
 
   const getActionBadge = (action) => {
     switch (action) {
-      case 'CREATED': return 'bg-blue-100 text-blue-700'
-      case 'UPDATED': return 'bg-purple-100 text-purple-700'
-      case 'EXPIRED': return 'bg-red-100 text-red-700'
+      case 'CREATED': 
+      case 'EXTRACTED': return 'bg-green-100 text-green-700'
+      case 'UPDATED': return 'bg-blue-100 text-blue-700'
+      case 'EXPIRED': 
+      case 'FORGOTTEN': return 'bg-red-100 text-red-700'
       default: return 'bg-zinc-100 text-zinc-700'
+    }
+  }
+
+  const getPathColor = (action) => {
+    switch (action) {
+      case 'CREATED': 
+      case 'EXTRACTED': return 'bg-green-500'
+      case 'UPDATED': return 'bg-blue-500'
+      case 'EXPIRED': 
+      case 'FORGOTTEN': return 'bg-red-500'
+      default: return 'bg-zinc-300'
     }
   }
 
@@ -134,7 +147,7 @@ export default function MemoryTimeline() {
               
               {/* Date Header */}
               <div className="flex items-center gap-4 mb-8">
-                <div className="w-5 h-5 rounded-full bg-zinc-100 border-4 border-white shadow-sm flex items-center justify-center z-10 relative">
+                <div className="w-5 h-5 rounded-full bg-zinc-100 border-4 border-white shadow-sm flex items-center justify-center z-10 relative -ml-[2px]">
                   <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full"></div>
                 </div>
                 <h3 className="text-xs font-bold tracking-widest text-zinc-500 uppercase">{group.dateGroup}</h3>
@@ -145,8 +158,11 @@ export default function MemoryTimeline() {
                 {group.commits.map((commit, cIdx) => (
                   <div key={cIdx} className="relative group">
                     
+                    {/* Colored Path Strip Overlay */}
+                    <div className={`absolute -left-[33px] top-2 bottom-[-40px] w-[3px] rounded-full z-0 ${getPathColor(commit.action)}`}></div>
+
                     {/* Node on line */}
-                    <div className="absolute -left-[49px] top-2 w-7 h-7 bg-white border border-zinc-200 rounded-full shadow-sm flex items-center justify-center z-10 transition-transform group-hover:scale-110">
+                    <div className="absolute -left-[46px] top-2 w-7 h-7 bg-white border border-zinc-200 rounded-full shadow-sm flex items-center justify-center z-10 transition-transform group-hover:scale-110">
                       {getIcon(commit.icon)}
                     </div>
 
