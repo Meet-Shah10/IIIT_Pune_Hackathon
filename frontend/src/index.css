@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* CSS Variables — UI_GUIDELINES.md palette */
+:root {
+  --bg: #F7F8FA;
+  --surface: #FFFFFF;
+  --border: #E4E7EC;
+  --text-primary: #14171F;
+  --text-secondary: #5B6270;
+  --text-muted: #8A909E;
+  --primary: #4F5CFA;
+  --primary-hover: #3F4AD1;
+  --primary-soft: #EEF0FF;
+  --forever: #4F5CFA;
+  --temporary: #E8A33D;
+  --session: #6FCF97;
+  --declined: #8A909E;
+  --forgotten: #E85D5D;
+  --sensitivity-low: #6FCF97;
+  --sensitivity-medium: #E8C13D;
+  --sensitivity-high: #E8A33D;
+  --sensitivity-critical: #E85D5D;
+  --success: #2FAE66;
+  --error: #E5484D;
+  --warning: #E8A33D;
+}
+
+[data-theme="dark"] {
+  --bg: #0E0F13;
+  --surface: #17181D;
+  --surface-raised: #1E2027;
+  --border: #2A2D36;
+  --text-primary: #F2F3F5;
+  --text-secondary: #A6ACBB;
+  --text-muted: #6E7480;
+  --primary: #6E79FF;
+  --primary-hover: #8189FF;
+  --primary-soft: #21234A;
+}
+
+html {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+}
+
+body { margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
