@@ -41,7 +41,7 @@ export function Sidebar() {
           }
         >
           <Clock className="w-5 h-5" />
-          <span>History (Chat)</span>
+          <span>Chat</span>
         </NavLink>
 
         <button className="w-full flex items-center space-x-3 px-4 py-3 rounded text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-on-surface)] transition-all duration-200 ease-in-out font-label-caps uppercase text-xs">

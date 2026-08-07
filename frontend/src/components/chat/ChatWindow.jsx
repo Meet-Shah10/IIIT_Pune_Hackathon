@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { PlusCircle, Mic, Send, Cpu, CheckCheck } from 'lucide-react'
+import { PlusCircle, Mic, Send, Cpu, CheckCheck, Copy, Edit3, Trash2, RefreshCw } from 'lucide-react'
 import { MemoryInterceptCard } from './MemoryInterceptCard'
 
 export default function ChatWindow({ messages, events, isLoading, onSendMessage }) {
@@ -26,7 +26,7 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
     // For assistant messages, we use the MemoryVault styling
     if (msg.role === 'assistant') {
       return (
-        <div key={msg._id || index} className="flex flex-col gap-2 w-full mt-4">
+        <div key={msg._id || index} className="flex flex-col gap-2 w-full mt-4 group">
           <div className="flex gap-3 max-w-[90%] sm:max-w-[80%]">
             <div className="flex-shrink-0 mt-1">
               {/* MV Avatar Placeholder */}
@@ -36,6 +36,16 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
             </div>
             <div className="flex flex-col gap-2 pt-1 text-white font-body-sm text-[13px] leading-relaxed">
               <p>{msg.content}</p>
+              
+              {/* Assistant Hover Actions */}
+              <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button className="text-zinc-500 hover:text-white transition-colors" title="Copy">
+                  <Copy className="w-4 h-4" />
+                </button>
+                <button className="text-zinc-500 hover:text-white transition-colors" title="Regenerate">
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
           {/* If there was an extraction event, render the card below the assistant message */}
@@ -48,13 +58,22 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
 
     // User message styling
     return (
-      <div key={msg._id || index} className="flex flex-col gap-1 self-end max-w-[85%] sm:max-w-[70%] mt-6">
+      <div key={msg._id || index} className="flex flex-col gap-1 self-end max-w-[85%] sm:max-w-[70%] mt-6 group">
         <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-700 rounded-xl rounded-tr-sm px-4 py-3 text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)] font-body-base text-[14px]">
           <p>{msg.content}</p>
         </div>
-        <div className="flex items-center gap-1 self-end text-zinc-500 font-body-sm text-[10px] mt-1">
-          <span>{new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-          <CheckCheck className="w-3 h-3" />
+        
+        {/* User Hover Actions */}
+        <div className="flex items-center justify-end gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button className="text-zinc-500 hover:text-white transition-colors" title="Edit">
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button className="text-zinc-500 hover:text-white transition-colors" title="Copy">
+            <Copy className="w-4 h-4" />
+          </button>
+          <button className="text-zinc-500 hover:text-red-400 transition-colors" title="Delete">
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
     )

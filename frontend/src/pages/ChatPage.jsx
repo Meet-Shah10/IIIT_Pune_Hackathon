@@ -13,17 +13,31 @@ export default function ChatPage() {
 
   const { data: messages = [], isLoading: isHistoryLoading } = useQuery({
     queryKey: ['chatHistory'],
-    queryFn: api.getChatHistory,
+    queryFn: async () => [], // Dummy empty array to bypass backend
   })
 
   // We need to keep track of events to simulate the "intercept card" inline
   const { data: events = [] } = useQuery({
     queryKey: ['events'],
-    queryFn: api.getEvents,
+    queryFn: async () => [], // Dummy empty array to bypass backend
   })
 
   const chatMutation = useMutation({
-    mutationFn: (content) => api.chat(content, allowStorage, useContext),
+    mutationFn: async (content) => {
+      // Dummy hardcoded response for frontend UI testing
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            message: {
+              _id: `msg-dummy-${Date.now()}`,
+              role: 'assistant',
+              content: "Acknowledged. I've logged a high-priority reminder for the quarterly AI architecture review for this Friday. (Dummy Response)",
+              createdAt: new Date().toISOString()
+            }
+          })
+        }, 1500)
+      })
+    },
     onMutate: async (newContent) => {
       await queryClient.cancelQueries({ queryKey: ['chatHistory'] })
       const previousMessages = queryClient.getQueryData(['chatHistory'])
@@ -41,8 +55,12 @@ export default function ChatPage() {
     onError: (err, newContent, context) => {
       queryClient.setQueryData(['chatHistory'], context.previousMessages)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['chatHistory'] })
+    onSettled: (data) => {
+      // Append the dummy response to the chat history locally
+      if (data && data.message) {
+        queryClient.setQueryData(['chatHistory'], old => [...(old || []), data.message])
+      }
+      // queryClient.invalidateQueries({ queryKey: ['chatHistory'] })
       queryClient.invalidateQueries({ queryKey: ['memories'] })
       queryClient.invalidateQueries({ queryKey: ['events'] })
     }
