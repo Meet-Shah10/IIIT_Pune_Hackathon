@@ -1,19 +1,76 @@
-import { useState } from 'react'
-import { MapPin, BrainCircuit, PlaneTakeoff, Navigation } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { MapPin, PlaneTakeoff } from 'lucide-react'
+
+function FriendlyMascot() {
+  return (
+    <div className="relative w-12 h-12 flex-shrink-0 animate-bounce mt-2" style={{ animationDuration: '3s', animationTimingFunction: 'ease-in-out' }}>
+      {/* Soft background glow */}
+      <div className="absolute inset-0.5 rounded-full bg-zinc-400/20 blur-md animate-pulse"></div>
+      
+      {/* Cute bot SVG */}
+      <svg className="w-12 h-12 relative z-10 text-zinc-100" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Antennas */}
+        <path d="M24 10V6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx="24" cy="5" r="2.5" fill="#f43f5e" className="animate-pulse" />
+        
+        {/* Head */}
+        <rect x="8" y="10" width="32" height="28" rx="14" fill="#18181b" stroke="#3f3f46" strokeWidth="2"/>
+        
+        {/* Face Screen */}
+        <rect x="12" y="14" width="24" height="20" rx="10" fill="#27272a" stroke="#52525b" strokeWidth="1"/>
+        
+        {/* Happy Eyes (curved paths for smiles/happiness) */}
+        <path d="M16 23C16 22 17 21 18 21C19 21 20 22 20 23" stroke="#a1a1aa" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M28 23C28 22 29 21 30 21C31 21 32 22 32 23" stroke="#a1a1aa" strokeWidth="2.5" strokeLinecap="round"/>
+        
+        {/* Rosy Cheeks */}
+        <circle cx="15" cy="27" r="1.5" fill="#f43f5e" opacity="0.8"/>
+        <circle cx="33" cy="27" r="1.5" fill="#f43f5e" opacity="0.8"/>
+        
+        {/* Smile */}
+        <path d="M21 28C22 29 23.5 29.5 24 29.5C24.5 29.5 26 29 27 28" stroke="#f4f4f5" strokeWidth="2" strokeLinecap="round"/>
+        
+        {/* Decorative ears */}
+        <rect x="5" y="20" width="3" height="8" rx="1.5" fill="#3f3f46"/>
+        <rect x="40" y="20" width="3" height="8" rx="1.5" fill="#3f3f46"/>
+      </svg>
+    </div>
+  )
+}
 
 export function MemoryInterceptCard({ detail, category, sensitivity }) {
   const [active, setActive] = useState(true)
+
+  // Trigger TTS narration on mount/update
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      // Cancel previous speaking utterances to avoid queuing overlap
+      window.speechSynthesis.cancel();
+      
+      const cleanDetail = detail || 'new information';
+      const textToSpeak = `I detected a memory event: "${cleanDetail}". Would you like me to remember this?`;
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.1; // Slightly higher pitch for a friendly bot persona
+      
+      window.speechSynthesis.speak(utterance);
+    }
+    
+    // Clean up/cancel speech if the component unmounts
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [detail]);
 
   // Determine sensitivity color and label
   const isMedOrHigh = sensitivity === 'medium' || sensitivity === 'high' || sensitivity === 'critical'
   
   return (
-    <div className="flex gap-3 w-full mt-2">
-      <div className="flex-shrink-0 mt-2 hidden sm:block">
-        <div className="w-6 h-6 flex items-center justify-center rounded-sm bg-primary-container/20 border border-[var(--color-primary-container)]/30">
-          <BrainCircuit className="text-[var(--color-primary-container)] w-3.5 h-3.5" />
-        </div>
-      </div>
+    <div className="flex items-start gap-4 w-full mt-2 animate-in fade-in slide-in-from-left-4 duration-300">
+      {/* Friendly Animated Mascot */}
+      <FriendlyMascot />
       
       <div className="flex-1 bg-zinc-950/80 backdrop-blur-xl border border-zinc-800 rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.6)] relative">
         {/* Top Accent Line */}
@@ -36,7 +93,6 @@ export function MemoryInterceptCard({ detail, category, sensitivity }) {
                 SENSITIVITY: {sensitivity?.toUpperCase() || 'LOW'}
               </span>
               <span className="text-zinc-600 text-[10px] mx-1">|</span>
-              <MapPin className="w-3 h-3 text-zinc-500" />
               <span className="font-label-caps text-[10px] text-zinc-500">{category?.toUpperCase() || 'GENERAL'}</span>
             </div>
           </div>
@@ -85,3 +141,4 @@ export function MemoryInterceptCard({ detail, category, sensitivity }) {
     </div>
   )
 }
+
