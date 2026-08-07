@@ -16,7 +16,7 @@ async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory
   "reply": "Conversational response",
   "negotiation_prompt": {
     "content": "Normalized 3rd-person fact (e.g., 'User lives in Pune')",
-    "category": "health|preference|habit|personal_details|misc",
+    "category": "health|preference|habit|personal_details|educational|misc",
     "reason": "Brief extraction reason"
   }
 }
