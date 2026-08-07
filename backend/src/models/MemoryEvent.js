@@ -19,6 +19,26 @@ const memoryEventSchema = new mongoose.Schema({
   detail: {
     type: String,
     required: true,
+  },
+  reason: {
+    type: String,
+    default: ''
+  },
+  memoryContent: {
+    type: String,
+    default: ''
+  },
+  memoryCategory: {
+    type: String,
+    default: 'general'
+  },
+  memorySensitivity: {
+    type: String,
+    default: 'low'
+  },
+  savedAt: {
+    type: Date,
+    default: null
   }
 }, { timestamps: true })
 

@@ -6,8 +6,8 @@ const MemorySchema = new mongoose.Schema({
   content: { type: String, required: true },
   category: { type: String, default: 'misc' },
   sensitivity: { type: String, enum: ['low', 'medium', 'high', 'critical'], default: 'low' },
-  reasoning: { type: String },
-  source: { type: String },
+  reasoning: { type: String, default: '' },
+  source: { type: String, default: 'chat' },
   status: { type: String, enum: ['active', 'archived'], default: 'active' },
 }, { timestamps: true });
 

@@ -20,6 +20,14 @@ const memorySchema = new mongoose.Schema({
     enum: ['low', 'medium', 'high', 'critical'],
     default: 'low'
   },
+  reasoning: {
+    type: String,
+    default: ''
+  },
+  source: {
+    type: String,
+    default: 'chat'
+  },
   status: {
     type: String,
     enum: ['active', 'expired', 'forgotten'],

@@ -72,29 +72,36 @@ app.post('/api/chat', async (req, res) => {
     // 5️⃣ If memory enabled and a negotiation_prompt exists, classify & store
     let memorySaved = false;
     if (memoryEnabled && extracted?.negotiation_prompt) {
-      const { content, category } = extracted.negotiation_prompt;
+      const { content, category, reason } = extracted.negotiation_prompt;
       const classification = await classifySensitivity(content, category);
+      const memoryReason = reason || classification.reasoning || 'User shared a durable personal detail';
 
       const newMemory = await Memory.create({
         userId,
         content,
         category: category || 'misc',
         sensitivity: classification.sensitivity,
-        reasoning: classification.reasoning,
-        source: classification.source,
+        reasoning: memoryReason,
+        source: classification.source || 'chat',
       });
 
       await MemoryEvent.create({
         userId,
         memoryId: newMemory._id,
-        action: 'CREATED',
+        action: 'extracted',
+        detail: `Saved memory: "${content}"`,
+        reason: memoryReason,
+        memoryContent: content,
+        memoryCategory: category || 'general',
+        memorySensitivity: classification.sensitivity,
+        savedAt: newMemory.createdAt,
       });
 
       extracted.negotiation_prompt = {
         ...extracted.negotiation_prompt,
         sensitivity: classification.sensitivity,
-        source: classification.source,
-        reasoning: classification.reasoning,
+        source: classification.source || 'chat',
+        reasoning: memoryReason,
       };
       memorySaved = true;
     }

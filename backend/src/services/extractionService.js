@@ -28,7 +28,12 @@ export const processSilentExtraction = async (userId, messageId, messageText) =>
         memoryId: memory._id,
         userId,
         action: 'extracted',
-        detail: `Auto-extracted from chat: "${item.content}"`
+        detail: `Auto-extracted from chat: "${item.content}"`,
+        reason: item.reason || item.content,
+        memoryContent: item.content,
+        memoryCategory: item.category || 'general',
+        memorySensitivity: item.sensitivity || 'low',
+        savedAt: memory.createdAt
       })
     }
     
