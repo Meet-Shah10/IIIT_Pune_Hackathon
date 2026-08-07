@@ -54,9 +54,9 @@ export const api = {
     return res.json();
   },
 
-  // Placeholder for chat history (can be implemented later)
-  getChatHistory: async () => {
-    const res = await fetch(`${API_BASE}/memories/chat-history`, {
+  // Get chat history for a session
+  getChatHistory: async (sessionId) => {
+    const res = await fetch(`${API_BASE}/chat/history/${sessionId}`, {
       headers: { 'x-user-id': USER_ID },
     });
     if (!res.ok) throw new Error('Failed to fetch chat history');

@@ -21,7 +21,8 @@ export default function ChatPage() {
 
   useEffect(() => {
     api.getMemories(userId).then(setMemories).catch(console.error);
-  }, [userId]);
+    api.getChatHistory(sessionId).then(setMessages).catch(console.error);
+  }, [userId, sessionId]);
 
   // We need to keep track of events to simulate the "intercept card" inline
   const { data: events = [] } = useQuery({
