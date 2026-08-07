@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../lib/api'
+import { api } from '../lib/api';
+import { getUserId, getSessionId } from '../utils/userSession';
 import ChatWindow from '../components/chat/ChatWindow'
 import { Menu, Search, Bell, Settings } from 'lucide-react'
 
@@ -13,8 +14,16 @@ export default function ChatPage() {
 
   const { data: messages = [], isLoading: isHistoryLoading } = useQuery({
     queryKey: ['chatHistory'],
-    queryFn: async () => [], // Dummy empty array to bypass backend
+    queryFn: async () => [], // Dummy placeholder – can be replaced later
   })
+
+  const userId = getUserId();
+  const sessionId = getSessionId();
+  const [memories, setMemories] = useState([]);
+
+  useEffect(() => {
+    api.getMemories(userId).then(setMemories).catch(console.error);
+  }, [userId]);
 
   // We need to keep track of events to simulate the "intercept card" inline
   const { data: events = [] } = useQuery({
@@ -23,29 +32,18 @@ export default function ChatPage() {
   })
 
   const chatMutation = useMutation({
-    mutationFn: async (content) => {
-      // Dummy hardcoded response for frontend UI testing
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            message: {
-              _id: `msg-dummy-${Date.now()}`,
-              role: 'assistant',
-              content: "Acknowledged. I've logged a high-priority reminder for the quarterly AI architecture review for this Friday. (Dummy Response)",
-              createdAt: new Date().toISOString()
-            }
-          })
-        }, 1500)
-      })
+    mutationFn: async ({ content, memoryEnabled, useContext }) => {
+      // Send request with user/session info and both memory toggles
+      return api.sendChat(content, memoryEnabled, useContext, sessionId);
     },
-    onMutate: async (newContent) => {
+    onMutate: async ({ content, memoryEnabled, useContext }) => {
       await queryClient.cancelQueries({ queryKey: ['chatHistory'] })
       const previousMessages = queryClient.getQueryData(['chatHistory'])
       
       const optimisticUserMsg = {
         _id: `temp-${Date.now()}`,
         role: 'user',
-        content: newContent,
+        content: content,
         createdAt: new Date().toISOString()
       }
       
@@ -55,19 +53,26 @@ export default function ChatPage() {
     onError: (err, newContent, context) => {
       queryClient.setQueryData(['chatHistory'], context.previousMessages)
     },
-    onSettled: (data) => {
-      // Append the dummy response to the chat history locally
-      if (data && data.message) {
-        queryClient.setQueryData(['chatHistory'], old => [...(old || []), data.message])
+    onSuccess: (data) => {
+      // Append assistant reply to chat history
+      const replyContent = data?.reply ?? data?.message;
+      if (replyContent) {
+        const assistantMsg = {
+          _id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: replyContent,
+          createdAt: new Date().toISOString(),
+        };
+        queryClient.setQueryData(['chatHistory'], old => [...(old || []), assistantMsg]);
       }
-      // queryClient.invalidateQueries({ queryKey: ['chatHistory'] })
-      queryClient.invalidateQueries({ queryKey: ['memories'] })
-      queryClient.invalidateQueries({ queryKey: ['events'] })
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['memories'] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
     }
   })
 
-  const handleSendMessage = (content) => {
-    chatMutation.mutate(content)
+  const handleSendMessage = ({ content, memoryEnabled, useContext }) => {
+    chatMutation.mutate({ content, memoryEnabled, useContext })
   }
 
   return (
