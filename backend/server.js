@@ -9,6 +9,7 @@ const Memory = require('./models/Memory');
 const MemoryEvent = require('./models/MemoryEvent');
 const Message = require('./models/Message');
 const memoryRoutes = require('./routes/memoryRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 const userIdMiddleware = require('./middleware/userId');
 
 const app = express();
@@ -108,6 +109,9 @@ app.post('/api/chat', async (req, res) => {
       const classification = await classifySensitivity(content, category);
       const memoryReason = reason || classification.reasoning || 'User shared a durable personal detail';
 
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
       const newMemory = await Memory.create({
         userId,
         content,
@@ -115,6 +119,8 @@ app.post('/api/chat', async (req, res) => {
         sensitivity: classification.sensitivity,
         reasoning: memoryReason,
         source: classification.source || 'chat',
+        expiresAt,
+        autoDelete: true,
       });
 
       await MemoryEvent.create({
@@ -166,6 +172,7 @@ app.get('/api/chat/history/:sessionId', async (req, res) => {
 // Memory CRUD endpoints (future dashboard)
 // -------------------------------------------------------------------
 app.use('/api/memories', memoryRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);

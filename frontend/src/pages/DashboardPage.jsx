@@ -44,41 +44,22 @@ const initialMemories = [
 ]
 
 
-const auditEvents = [
-  {
-    id: 1,
-    timestamp: 'Just now',
-    description: 'Memory Removed: Allergic to peanuts',
-    type: 'removed'
-  },
-  {
-    id: 2,
-    timestamp: '2 hours ago',
-    description: 'Memory Extracted: Loves sci-fi movies',
-    type: 'extracted'
-  },
-  {
-    id: 3,
-    timestamp: 'Yesterday, 14:30',
-    description: 'Settings Updated: Enabled continuous extraction',
-    type: 'settings'
-  },
-  {
-    id: 4,
-    timestamp: 'Yesterday, 09:15',
-    description: 'Memory Extracted: Preparing for GATE 2027',
-    type: 'extracted'
-  },
-  {
-    id: 5,
-    timestamp: '2 days ago',
-    description: 'Memory saved',
-    type: 'settings'
-  }
-]
+function formatTimeAgo(dateStr) {
+  if (!dateStr) return ''
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins} min ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs} hr${hrs !== 1 ? 's' : ''} ago`
+  const days = Math.floor(hrs / 24)
+  return `${days} day${days !== 1 ? 's' : ''} ago`
+}
 
 export default function DashboardPage() {
   const [memories, setMemories] = useState(initialMemories)
+  const [auditEvents, setAuditEvents] = useState([])
+  const [eventsLoading, setEventsLoading] = useState(true)
 
   useEffect(() => {
     const loadMemories = async () => {
@@ -100,6 +81,26 @@ export default function DashboardPage() {
     }
 
     loadMemories()
+
+    const loadEvents = async () => {
+      try {
+        const data = await api.getEvents()
+        if (Array.isArray(data)) {
+          setAuditEvents(data.slice(0, 8).map((e) => ({
+            id: e._id,
+            timestamp: formatTimeAgo(e.createdAt || e.savedAt),
+            description: `${e.action === 'forgotten' ? 'Removed' : 'Saved'}: ${e.memoryContent || e.detail || 'Memory event'}`,
+            type: e.action === 'forgotten' ? 'removed' : e.action === 'extracted' ? 'extracted' : 'settings',
+          })))
+        }
+      } catch (error) {
+        console.error('Failed to load activity:', error)
+      } finally {
+        setEventsLoading(false)
+      }
+    }
+
+    loadEvents()
   }, [])
 
   const handleForget = async (id) => {
@@ -207,14 +208,27 @@ export default function DashboardPage() {
             <h2 className="text-sm font-semibold text-zinc-900 mb-6 uppercase tracking-wide">Activity Log</h2>
             
             <div className="border-l-2 border-zinc-200 ml-2 pl-4 space-y-6">
-              {auditEvents.map(event => (
-                <div key={event.id} className="relative">
-                  <div className={`absolute w-2.5 h-2.5 rounded-full ${getDotColor(event.type)} -left-[21px] top-1.5 border-2 border-zinc-50`} />
-                  
-                  <div className="text-xs text-zinc-400 mb-1">{event.timestamp}</div>
-                  <div className="text-sm text-zinc-800">{event.description}</div>
+              {eventsLoading ? (
+                <div className="space-y-5">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="relative">
+                      <div className="absolute w-2.5 h-2.5 rounded-full bg-zinc-200 animate-pulse -left-[21px] top-1.5 border-2 border-zinc-50" />
+                      <div className="h-3 bg-zinc-100 animate-pulse rounded w-1/2 mb-1" />
+                      <div className="h-3 bg-zinc-100 animate-pulse rounded w-3/4" />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : auditEvents.length === 0 ? (
+                <p className="text-sm text-zinc-400">No activity yet.</p>
+              ) : (
+                auditEvents.map(event => (
+                  <div key={event.id} className="relative">
+                    <div className={`absolute w-2.5 h-2.5 rounded-full ${getDotColor(event.type)} -left-[21px] top-1.5 border-2 border-zinc-50`} />
+                    <div className="text-xs text-zinc-400 mb-1">{event.timestamp}</div>
+                    <div className="text-sm text-zinc-800">{event.description}</div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
