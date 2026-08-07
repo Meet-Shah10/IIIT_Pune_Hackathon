@@ -22,6 +22,25 @@ app.use(userIdMiddleware);
 // DB connection
 connectDB();
 
+function buildChatSessionId() {
+  return `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+// -------------------------------------------------------------------
+// Session creation endpoint for the new-chat flow
+// -------------------------------------------------------------------
+app.post('/api/chat/sessions', (req, res) => {
+  const { userId } = req.body;
+  const resolvedUserId = userId || req.headers['x-user-id'];
+
+  if (!resolvedUserId) {
+    return res.status(400).json({ error: 'User ID is required' });
+  }
+
+  const sessionId = buildChatSessionId();
+  return res.json({ sessionId, userId: resolvedUserId });
+});
+
 // -------------------------------------------------------------------
 // Primary chat endpoint – now respects memory & session history
 // -------------------------------------------------------------------

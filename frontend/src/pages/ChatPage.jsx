@@ -97,11 +97,21 @@ export default function ChatPage() {
     chatMutation.mutate({ content, memoryEnabled, useContext, language })
   }
 
-  const handleNewChat = () => {
-    const nextSessionId = setSessionId(buildSessionId())
-    sessionIdRef.current = nextSessionId
-    setSessionIdState(nextSessionId)
-    setMessages([])
+  const handleNewChat = async () => {
+    try {
+      const data = await api.createChatSession(userId)
+      const nextSessionId = data?.sessionId || buildSessionId()
+      const persistedSessionId = setSessionId(nextSessionId)
+      sessionIdRef.current = persistedSessionId
+      setSessionIdState(persistedSessionId)
+      setMessages([])
+    } catch (error) {
+      console.error('Failed to create new chat session:', error)
+      const fallbackSessionId = setSessionId(buildSessionId())
+      sessionIdRef.current = fallbackSessionId
+      setSessionIdState(fallbackSessionId)
+      setMessages([])
+    }
   }
 
   return (
