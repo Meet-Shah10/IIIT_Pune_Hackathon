@@ -16,6 +16,35 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
       ? 'Expired'
       : 'Active retention';
 
+  const theme = {
+    Low: {
+      bg: 'bg-emerald-50/50',
+      border: 'border-emerald-200',
+      text: 'text-emerald-700',
+      icon: 'text-emerald-600',
+      bar: 'bg-emerald-400',
+      textLight: 'text-emerald-800/80'
+    },
+    Medium: {
+      bg: 'bg-amber-50/50',
+      border: 'border-amber-200',
+      text: 'text-amber-700',
+      icon: 'text-amber-600',
+      bar: 'bg-amber-400',
+      textLight: 'text-amber-800/80'
+    },
+    High: {
+      bg: 'bg-rose-50/50',
+      border: 'border-rose-200',
+      text: 'text-rose-700',
+      icon: 'text-rose-600',
+      bar: 'bg-rose-400',
+      textLight: 'text-rose-800/80'
+    }
+  }[riskLevel] || {
+    bg: 'bg-zinc-50/50', border: 'border-zinc-200', text: 'text-zinc-700', icon: 'text-zinc-600', bar: 'bg-zinc-400', textLight: 'text-zinc-800/80'
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/20 backdrop-blur-sm transition-all duration-300">
       
@@ -59,47 +88,47 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {/* Box 1 */}
-              <div className="bg-rose-50/50 border border-rose-200 rounded-xl p-4 flex flex-col justify-between">
-                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-rose-700 mb-2 tracking-wide">
+              <div className={`${theme.bg} ${theme.border} border rounded-xl p-4 flex flex-col justify-between`}>
+                <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase ${theme.text} mb-2 tracking-wide`}>
                   <ShieldAlert className="w-3.5 h-3.5" /> Sensitivity
                 </div>
-                <div className="text-lg font-semibold text-rose-700">{sensitivityLabel}</div>
+                <div className={`text-base font-semibold ${theme.text} break-words line-clamp-2`}>{sensitivityLabel}</div>
               </div>
 
               {/* Box 2 */}
               <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
-                  <FileType className="w-3.5 h-3.5" /> Data Type
+                  <FileType className="w-3.5 h-3.5 shrink-0" /> Data Type
                 </div>
-                <div className="text-lg font-medium text-zinc-900">{memory.category || 'general'}</div>
+                <div className="text-base font-medium text-zinc-900 break-words line-clamp-2 capitalize">{memory.category || 'general'}</div>
               </div>
 
               {/* Box 3 */}
               <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
-                  <Hourglass className="w-3.5 h-3.5" /> Storage Duration
+                  <Hourglass className="w-3.5 h-3.5 shrink-0" /> Storage
                 </div>
-                <div className="text-lg font-medium text-zinc-900">{storageDuration}</div>
+                <div className="text-base font-medium text-zinc-900 break-words line-clamp-2">{storageDuration}</div>
               </div>
 
               {/* Box 4 */}
               <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
-                  <Lock className="w-3.5 h-3.5" /> Access Scope
+                  <Lock className="w-3.5 h-3.5 shrink-0" /> Access
                 </div>
-                <div className="text-lg font-medium text-zinc-900">{memory.reason ? 'Context-based recall' : 'Not recorded'}</div>
+                <div className="text-base font-medium text-zinc-900 break-words line-clamp-2">{memory.reason ? 'Context-based recall' : 'Not recorded'}</div>
               </div>
             </div>
           </div>
 
           {/* Risk Assessment Warning */}
-          <div className="bg-rose-50/50 border border-rose-100 rounded-xl p-6 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-rose-400"></div>
+          <div className={`${theme.bg} ${theme.border} border rounded-xl p-6 relative overflow-hidden`}>
+            <div className={`absolute top-0 left-0 w-1 h-full ${theme.bar}`}></div>
             <div className="flex items-center gap-2 mb-3">
-              <ShieldAlert className="w-4 h-4 text-rose-600" />
-              <h4 className="text-xs font-bold uppercase text-rose-700 tracking-wider">Risk Assessment: {riskLevel}</h4>
+              <ShieldAlert className={`w-4 h-4 ${theme.icon}`} />
+              <h4 className={`text-xs font-bold uppercase ${theme.text} tracking-wider`}>Risk Assessment: {riskLevel}</h4>
             </div>
-            <p className="text-sm text-rose-800/80 leading-relaxed">
+            <p className={`text-sm ${theme.textLight} leading-relaxed break-words`}>
               {memory.reason ? `This memory was stored because: ${memory.reason}` : 'This memory does not include a recorded reason in the current event payload.'}
             </p>
           </div>
@@ -108,20 +137,10 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
 
         {/* Bottom Action Bar */}
         <div className="px-8 py-6 border-t border-zinc-100 bg-white flex flex-col sm:flex-row gap-4 items-center">
-          <button 
-            onClick={onClose}
-            className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-3 border border-rose-200 text-rose-600 font-semibold rounded-lg hover:bg-rose-50 transition-colors"
-          >
-            <Trash2 className="w-4 h-4" /> Delete Now
-          </button>
+        
           
-          <button className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-3 border border-zinc-200 text-zinc-600 font-medium rounded-lg hover:bg-zinc-50 transition-colors bg-white shadow-sm">
-            <Fingerprint className="w-4 h-4" /> Anonymize
-          </button>
           
-          <button className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-3 border border-zinc-200 text-zinc-600 font-medium rounded-lg hover:bg-zinc-50 transition-colors bg-white shadow-sm">
-            <ShieldOff className="w-4 h-4" /> Restrict Access
-          </button>
+          
         </div>
 
       </div>
