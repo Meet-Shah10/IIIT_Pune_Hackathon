@@ -8,6 +8,7 @@ const { classifySensitivity } = require('./services/privacyClassifier');
 const Memory = require('./models/Memory');
 const MemoryEvent = require('./models/MemoryEvent');
 const memoryRoutes = require('./routes/memoryRoutes');
+const userIdMiddleware = require('./middleware/userId');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(userIdMiddleware);
 
 // DB connection
 connectDB();
@@ -23,7 +25,7 @@ connectDB();
 // Primary chat endpoint – now respects memoryEnabled toggle
 // -------------------------------------------------------------------
 app.post('/api/chat', async (req, res) => {
-  const { userId, sessionId, message, memoryEnabled } = req.body;
+  const { userId, sessionId, message, memoryEnabled, useContext } = req.body;
   console.log('Payload received:', req.body);
 
   if (!userId || !sessionId || !message) {
@@ -31,9 +33,9 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
-    // 1️⃣ Pull active memories if toggle enabled
+    // 1️⃣ Pull active memories only if "Use Memory" toggle is on
     let systemPrompt = '';
-    if (memoryEnabled) {
+    if (useContext) {
       const activeMemories = await Memory.find({ userId, status: 'active' });
       if (activeMemories.length) {
         const facts = activeMemories

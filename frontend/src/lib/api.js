@@ -1,37 +1,64 @@
-const API_BASE = 'http://localhost:5000/api'
+// src/lib/api.js
+import { getUserId } from '../utils/userSession';
+
+const API_BASE = 'http://localhost:3000/api';
+const USER_ID = getUserId();
 
 export const api = {
-  chat: async (message, allowStorage, useContext) => {
+  // Send a chat message with required payload fields
+  sendChat: async (message, memoryEnabled, useContext, sessionId) => {
     const res = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, allowStorage, useContext })
-    })
-    if (!res.ok) throw new Error('Chat request failed')
-    return res.json()
-  },
-  
-  getMemories: async () => {
-    const res = await fetch(`${API_BASE}/memories`)
-    if (!res.ok) throw new Error('Failed to fetch memories')
-    return res.json()
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': USER_ID,
+      },
+      body: JSON.stringify({
+        userId: USER_ID,
+        sessionId,
+        message,
+        memoryEnabled,
+        useContext,
+      }),
+    });
+    if (!res.ok) throw new Error('Chat request failed');
+    return res.json();
   },
 
+  // Get memories for a specific user (defaults to current USER_ID)
+  getMemories: async (userId = USER_ID) => {
+    const res = await fetch(`${API_BASE}/memories/${userId}`, {
+      headers: { 'x-user-id': USER_ID },
+    });
+    if (!res.ok) throw new Error('Failed to fetch memories');
+    return res.json();
+  },
+
+  // Get events (kept for compatibility)
   getEvents: async () => {
-    const res = await fetch(`${API_BASE}/memories/events`)
-    if (!res.ok) throw new Error('Failed to fetch events')
-    return res.json()
+    const res = await fetch(`${API_BASE}/memories/events`, {
+      headers: { 'x-user-id': USER_ID },
+    });
+    if (!res.ok) throw new Error('Failed to fetch events');
+    return res.json();
   },
 
+  // Delete a memory
   forgetMemory: async (id) => {
-    const res = await fetch(`${API_BASE}/memories/${id}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error('Failed to forget memory')
-    return res.json()
+    const res = await fetch(`${API_BASE}/memories/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': USER_ID },
+    });
+    if (!res.ok) throw new Error('Failed to forget memory');
+    return res.json();
   },
 
+  // Placeholder for chat history (can be implemented later)
   getChatHistory: async () => {
-    const res = await fetch(`${API_BASE}/memories/chat-history`)
-    if (!res.ok) throw new Error('Failed to fetch chat history')
-    return res.json()
-  }
-}
+    const res = await fetch(`${API_BASE}/memories/chat-history`, {
+      headers: { 'x-user-id': USER_ID },
+    });
+    if (!res.ok) throw new Error('Failed to fetch chat history');
+    return res.json();
+  },
+};

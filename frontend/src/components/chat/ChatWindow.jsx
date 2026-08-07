@@ -15,7 +15,7 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!inputValue.trim() || isLoading) return
-    onSendMessage(inputValue)
+    onSendMessage({ content: inputValue, memoryEnabled: storeMemories, useContext: useProfile })
     setInputValue('')
   }
 
