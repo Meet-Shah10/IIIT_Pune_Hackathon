@@ -4,43 +4,43 @@
 
 require('dotenv').config();
 
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 async function chatCompletion(messages, options = {}) {
-  const { temperature, max_tokens, response_format, jsonMode } = options;
-  const body = {
-    model: module.exports.DEFAULT_MODEL,
-    messages,
-    ...(temperature !== undefined ? { temperature } : {}),
-    ...(max_tokens !== undefined ? { max_tokens } : {}),
-    ...(response_format ? { response_format } : {}),
-    ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
-  };
+    const { temperature, max_tokens, response_format, jsonMode } = options;
+    const body = {
+        model: module.exports.DEFAULT_MODEL,
+        messages,
+        ...(temperature !== undefined ? { temperature } : {}),
+        ...(max_tokens !== undefined ? { max_tokens } : {}),
+        ...(response_format ? { response_format } : {}),
+        ...(jsonMode ? { response_format: { type: 'json_object' } } : {}),
+    };
 
-  const response = await fetch(module.exports.BASE_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${module.exports.API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
+    const response = await fetch(module.exports.BASE_URL, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${module.exports.API_KEY}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`NVIDIA API Error ${response.status}: ${errorText}`);
-  }
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`NVIDIA API Error ${response.status}: ${errorText}`);
+    }
 
-  const data = await response.json();
-  return data.choices[0].message.content;
+    const data = await response.json();
+    return data.choices[0].message.content;
 }
 
 module.exports = {
-  // Base endpoint for chat completions (used in memoryService)
-  BASE_URL: 'https://integrate.api.nvidia.com/v1/chat/completions',
-  // Default model used for memory extraction
-  DEFAULT_MODEL: 'meta/llama-3.1-8b-instruct',
-  // API key – pulled from process.env at runtime
-  API_KEY: process.env.NVIDIA_API_KEY,
-  chatCompletion,
+    // Base endpoint for chat completions (used in memoryService)
+    BASE_URL: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    // Default model used for memory extraction
+    DEFAULT_MODEL: 'riva-translate-4b-instruct-v2',
+    // API key – pulled from process.env at runtime
+    API_KEY: process.env.NVIDIA_API_KEY,
+    chatCompletion,
 };
