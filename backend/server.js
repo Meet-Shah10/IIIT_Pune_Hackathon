@@ -63,14 +63,15 @@ app.post('/api/chat', async (req, res) => {
 
     // 3️⃣ Feed both Recent Chat History & Negotiated Facts into LLM call
     const extracted = await extractMemoryAndRespond(message, systemPrompt, recentHistory);
+    const replyContent = extracted?.reply || extracted?.message || extracted?.response || 'I am processing your request.';
 
     // 4️⃣ Save User's new message and AI's response back to MongoDB
     await Message.create({ userId, sessionId, role: 'user', content: message });
-    await Message.create({ userId, sessionId, role: 'assistant', content: extracted.reply });
+    await Message.create({ userId, sessionId, role: 'assistant', content: replyContent });
 
     // 5️⃣ If memory enabled and a negotiation_prompt exists, classify & store
     let memorySaved = false;
-    if (memoryEnabled && extracted.negotiation_prompt) {
+    if (memoryEnabled && extracted?.negotiation_prompt) {
       const { content, category } = extracted.negotiation_prompt;
       const classification = await classifySensitivity(content, category);
 
@@ -100,8 +101,8 @@ app.post('/api/chat', async (req, res) => {
 
     // 6️⃣ Respond
     return res.json({
-      reply: extracted.reply,
-      negotiation_prompt: extracted.negotiation_prompt || null,
+      reply: replyContent,
+      negotiation_prompt: extracted?.negotiation_prompt || null,
       memorySaved,
     });
   } catch (err) {
