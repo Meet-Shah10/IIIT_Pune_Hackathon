@@ -1,30 +1,97 @@
-// server.js
+// server.js – main entry point
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const connectDB = require('./config/db');
 const { extractMemoryAndRespond } = require('./services/memoryService');
+const { classifySensitivity } = require('./services/privacyClassifier');
+const Memory = require('./models/Memory');
+const MemoryEvent = require('./models/MemoryEvent');
+const memoryRoutes = require('./routes/memoryRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Simple in-memory detection for demo – only one feature (memory extraction) implemented
+// DB connection
+connectDB();
+
+// -------------------------------------------------------------------
+// Primary chat endpoint – now respects memoryEnabled toggle
+// -------------------------------------------------------------------
 app.post('/api/chat', async (req, res) => {
-  const { userId, sessionId, message } = req.body;
+  const { userId, sessionId, message, memoryEnabled } = req.body;
+  console.log('Payload received:', req.body);
+
   if (!userId || !sessionId || !message) {
-    return res.status(400).json({ error: 'Missing fields' });
+    return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
-    const result = await extractMemoryAndRespond(message);
-    // result has { reply, negotiation_prompt }
-    return res.json(result);
+    // 1️⃣ Pull active memories if toggle enabled
+    let systemPrompt = '';
+    if (memoryEnabled) {
+      const activeMemories = await Memory.find({ userId, status: 'active' });
+      if (activeMemories.length) {
+        const facts = activeMemories
+          .map(m => `- ${m.content} (category: ${m.category})`)
+          .join('\n');
+        systemPrompt = `You have the following known facts about the user:\n${facts}\nUse them when replying.`;
+      }
+    }
+
+    // 2️⃣ Extract memory & response (systemPrompt passed as second arg)
+    const extracted = await extractMemoryAndRespond(message, systemPrompt);
+
+    // 3️⃣ If memory enabled and a negotiation_prompt exists, classify & store
+    let memorySaved = false;
+    if (memoryEnabled && extracted.negotiation_prompt) {
+      const { content, category } = extracted.negotiation_prompt;
+      const classification = await classifySensitivity(content, category);
+
+      const newMemory = await Memory.create({
+        userId,
+        content,
+        category: category || 'misc',
+        sensitivity: classification.sensitivity,
+        reasoning: classification.reasoning,
+        source: classification.source,
+      });
+
+      await MemoryEvent.create({
+        userId,
+        memoryId: newMemory._id,
+        action: 'CREATED',
+      });
+
+      extracted.negotiation_prompt = {
+        ...extracted.negotiation_prompt,
+        sensitivity: classification.sensitivity,
+        source: classification.source,
+        reasoning: classification.reasoning,
+      };
+      memorySaved = true;
+    }
+
+    // 4️⃣ Respond
+    return res.json({
+      reply: extracted.reply,
+      negotiation_prompt: extracted.negotiation_prompt || null,
+      memorySaved,
+    });
   } catch (err) {
     console.error('Memory extraction error:', err);
     return res.status(500).json({ error: 'Failed to process chat', details: err.message });
   }
 });
+
+// -------------------------------------------------------------------
+// Memory CRUD endpoints (future dashboard)
+// -------------------------------------------------------------------
+app.use('/api/memories', memoryRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
