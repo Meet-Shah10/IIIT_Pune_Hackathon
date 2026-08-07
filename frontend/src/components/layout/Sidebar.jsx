@@ -69,10 +69,10 @@ export function Sidebar() {
           <span>Timeline</span>
         </NavLink>
 
-        <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900 transition-all duration-200 text-sm font-medium">
+        {/* <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900 transition-all duration-200 text-sm font-medium">
           <Settings className="w-4 h-4" />
           <span>Customize</span>
-        </button>
+        </button> */}
       </div>
 
 
