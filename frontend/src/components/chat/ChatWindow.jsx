@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Plus, Mic, ArrowUp, Cpu, Copy, Edit3, Trash2, RefreshCw, Database, UserCheck } from 'lucide-react'
 import { MemoryInterceptCard } from './MemoryInterceptCard'
 
@@ -7,16 +7,31 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
   const [storeMemories, setStoreMemories] = useState(true)
   const [useProfile, setUseProfile] = useState(true)
   const endRef = useRef(null)
+  const textareaRef = useRef(null)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, events, isLoading])
+
+  // Auto-resize textarea
+  const autoResize = useCallback(() => {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = Math.min(el.scrollHeight, 200) + 'px'
+  }, [])
+
+  useEffect(() => {
+    autoResize()
+  }, [inputValue, autoResize])
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!inputValue.trim() || isLoading) return
     onSendMessage({ content: inputValue, memoryEnabled: storeMemories, useContext: useProfile })
     setInputValue('')
+    // Reset height after send
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }
 
   const renderMessageWithEvents = (msg, index) => {
@@ -81,8 +96,8 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
   return (
     <div className="flex flex-col h-full relative w-full pt-16">
       
-      {/* Active Context Header (Pinned Toggles) */}
-      <div className="absolute top-4 left-0 right-0 flex justify-center z-40 pointer-events-none">
+      {/* Active Context Header (Pinned Toggles) — fixed so it never scrolls away */}
+      <div className="fixed top-4 left-0 md:left-64 right-0 flex justify-center z-[60] pointer-events-none">
         <div className="pointer-events-auto bg-white/80 backdrop-blur-md border border-zinc-200 shadow-sm rounded-full px-5 py-2.5 flex items-center gap-6">
           
           <label className="flex items-center gap-2 cursor-pointer group">
@@ -150,6 +165,7 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
           <form onSubmit={handleSubmit} className="relative flex flex-col bg-white border border-zinc-200 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-zinc-300 focus-within:shadow-[0_12px_40px_rgb(0,0,0,0.12)] transition-all duration-200">
             
             <textarea 
+              ref={textareaRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
@@ -158,7 +174,8 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
                   handleSubmit(e)
                 }
               }}
-              className="w-full bg-transparent border-0 pt-4 pb-2 px-4 text-base text-zinc-900 placeholder-zinc-400 focus:ring-0 focus:outline-none resize-none max-h-40 no-scrollbar" 
+              className="w-full bg-transparent border-0 pt-4 pb-2 px-4 text-base text-zinc-900 placeholder-zinc-400 focus:ring-0 focus:outline-none resize-none overflow-y-auto no-scrollbar" 
+              style={{ minHeight: '28px', maxHeight: '200px' }}
               placeholder="Ask anything..." 
               rows={1}
             />
