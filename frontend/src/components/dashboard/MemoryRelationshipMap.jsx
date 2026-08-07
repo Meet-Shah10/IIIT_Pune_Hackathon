@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Brain, Trash2, X, Activity, Sliders, Clock, User, BookOpen, FileText } from 'lucide-react'
+import { Brain, Trash2, X, Activity, Sliders, Clock, User, BookOpen, FileText, Edit3 } from 'lucide-react'
 
 // The 6 Canonical Backend Categories
 const CANONICAL_CATEGORIES = [
@@ -346,15 +346,24 @@ export default function MemoryRelationshipMap({ memories = [], onForgetMemory })
                       </p>
                     </div>
 
-                    {/* Revoke / Forget Button */}
-                    <button
-                      onClick={() => onForgetMemory && onForgetMemory(mem.id)}
-                      title="Forget memory"
-                      className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1 text-xs"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span className="hidden group-hover:inline font-medium">Forget</span>
-                    </button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        title="Edit memory"
+                        className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1 text-xs"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span className="hidden group-hover:inline font-medium">Edit</span>
+                      </button>
+                      <button
+                        onClick={() => onForgetMemory && onForgetMemory(mem.id)}
+                        title="Forget memory"
+                        className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors flex items-center gap-1 text-xs"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span className="hidden group-hover:inline font-medium">Forget</span>
+                      </button>
+                    </div>
                   </div>
                 )
               })}
