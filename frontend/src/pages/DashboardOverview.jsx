@@ -195,44 +195,49 @@ export default function DashboardOverview() {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 flex flex-col items-center">
+              {/* Donut Chart using CSS conic-gradient */}
+              <div 
+                className="w-32 h-32 rounded-full relative mb-6 shadow-inner cursor-pointer"
+                title="Hover Info: High (15%), Medium (35%), Low (50%)"
+                style={{
+                  background: 'conic-gradient(#FF6F61 0% 15%, #008080 15% 50%, #1B365D 50% 100%)'
+                }}
+              >
+                {/* Inner circle for Donut look */}
+                <div className="absolute inset-3 bg-white rounded-full flex flex-col items-center justify-center shadow-sm hover:bg-zinc-50 transition-colors">
+                  <span className="text-xl font-bold text-zinc-800">100%</span>
+                  <span className="text-[9px] text-zinc-400 font-medium uppercase tracking-wider">Analyzed</span>
+                </div>
+              </div>
 
-              {/* High */}
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-medium text-rose-600">High Sensitivity</span>
+              {/* Legend */}
+              <div className="w-full space-y-3">
+                {/* High */}
+                <div className="flex justify-between items-center text-sm" title="High Risk: 15%">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: '#FF6F61' }}></div>
+                    <span className="font-medium text-zinc-700">High Risk</span>
+                  </div>
                   <span className="font-semibold text-zinc-900">15%</span>
                 </div>
-                <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden mb-1">
-                  <div className="bg-rose-500 h-full rounded-full" style={{ width: '15%' }}></div>
-                </div>
-                <p className="text-xs text-zinc-500">Strict 7-day retention</p>
-              </div>
-
-              {/* Medium */}
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-medium text-amber-600">Medium Sensitivity</span>
+                {/* Medium */}
+                <div className="flex justify-between items-center text-sm" title="Medium Risk: 35%">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: '#008080' }}></div>
+                    <span className="font-medium text-zinc-700">Medium Risk</span>
+                  </div>
                   <span className="font-semibold text-zinc-900">35%</span>
                 </div>
-                <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden mb-1">
-                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '35%' }}></div>
-                </div>
-                <p className="text-xs text-zinc-500">Standard 30-day retention</p>
-              </div>
-
-              {/* Low */}
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-medium text-blue-600">Low Sensitivity</span>
+                {/* Low */}
+                <div className="flex justify-between items-center text-sm" title="Low Risk: 50%">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: '#1B365D' }}></div>
+                    <span className="font-medium text-zinc-700">Low Risk</span>
+                  </div>
                   <span className="font-semibold text-zinc-900">50%</span>
                 </div>
-                <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden mb-1">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: '50%' }}></div>
-                </div>
-                <p className="text-xs text-zinc-500">Archived after 90 days</p>
               </div>
-
             </div>
 
             <div className="px-6 pb-6 space-y-3">

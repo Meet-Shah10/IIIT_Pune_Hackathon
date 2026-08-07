@@ -48,6 +48,66 @@ export function Sidebar() {
             title="New chat"
           >
             <Plus className="w-4 h-4" />
+=======
+      {/* Primary Links */}
+      <div className="px-4 mt-4 space-y-0.5">
+        <NavLink
+          to="/"
+          className={({ isActive }) =>
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
+              ? 'bg-zinc-200/50 text-zinc-900'
+              : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
+            }`
+          }
+        >
+          <Monitor className="w-4 h-4" />
+          <span>Chat</span>
+        </NavLink>
+
+        <NavLink
+          to="/dashboard"
+          className={({ isActive }) =>
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
+              ? 'bg-zinc-200/50 text-zinc-900'
+              : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
+            }`
+          }
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span>Dashboard</span>
+        </NavLink>
+
+        <NavLink
+          to="/timeline"
+          className={({ isActive }) =>
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
+              ? 'bg-zinc-200/50 text-zinc-900'
+              : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
+            }`
+          }
+        >
+          <GitCommit className="w-4 h-4" />
+          <span>Timeline</span>
+        </NavLink>
+
+        {/* <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900 transition-all duration-200 text-sm font-medium">
+          <Settings className="w-4 h-4" />
+          <span>Customize</span>
+        </button> */}
+      </div>
+
+
+
+      {/* Sessions Section */}
+      <div className="px-4 mt-8 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 px-3 mb-2">
+          <span>Sessions</span>
+          <ChevronDown className="w-3.5 h-3.5" />
+        </div>
+        <div className="space-y-0.5">
+          <button className="w-full text-left px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-200/50 rounded-md transition-colors truncate">
+            hello
+>>>>>>> be7729885ecb6fcb9d39e50794e01c8f494366ba
           </button>
         </div>
       )}
