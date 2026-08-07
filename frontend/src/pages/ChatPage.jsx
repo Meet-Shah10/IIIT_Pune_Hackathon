@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api';
-import { getUserId, getSessionId } from '../utils/userSession';
+import { getUserId, getSessionId, buildSessionId, setSessionId } from '../utils/userSession';
 import ChatWindow from '../components/chat/ChatWindow'
 import LanguageSelector from '../components/ui/LanguageSelector'
-import { Menu, Search, Bell, Settings } from 'lucide-react'
+import { Menu, Search, Bell, Settings, Plus } from 'lucide-react'
 
 export default function ChatPage() {
   const queryClient = useQueryClient()
@@ -14,9 +14,9 @@ export default function ChatPage() {
   const useContext = true
 
   const [messages, setMessages] = useState([])
+  const [sessionId, setSessionIdState] = useState(() => getSessionId())
 
   const userId = getUserId();
-  const sessionId = getSessionId();
   const [memories, setMemories] = useState([]);
 
   useEffect(() => {
@@ -95,6 +95,12 @@ export default function ChatPage() {
     chatMutation.mutate({ content, memoryEnabled, useContext, language })
   }
 
+  const handleNewChat = () => {
+    const nextSessionId = setSessionId(buildSessionId())
+    setSessionIdState(nextSessionId)
+    setMessages([])
+  }
+
   return (
     <div className="flex flex-col h-full w-full relative">
       {/* Top Bar (Perplexity style) */}
@@ -108,6 +114,14 @@ export default function ChatPage() {
         </div>
 
         <div className="flex items-center gap-3 pointer-events-auto">
+          <button
+            onClick={handleNewChat}
+            className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 transition-colors"
+            title="Start a new chat"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New chat</span>
+          </button>
           <LanguageSelector />
           <button className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">

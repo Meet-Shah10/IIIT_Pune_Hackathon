@@ -5,12 +5,12 @@ import LanguageSelector from '../ui/LanguageSelector'
 
 function MiniMascot() {
   return (
-    <div className="relative w-8 h-8 flex-shrink-0 animate-bounce" style={{ animationDuration: '3s', animationTimingFunction: 'ease-in-out' }}>
+    <div className="relative w-10 h-10 flex-shrink-0 animate-bounce" style={{ animationDuration: '3s', animationTimingFunction: 'ease-in-out' }}>
       {/* Soft background glow */}
       <div className="absolute inset-0.5 rounded-full bg-zinc-200/50 blur-sm animate-pulse"></div>
 
       {/* Cute bot SVG */}
-      <svg className="w-8 h-8 relative z-10 text-zinc-100" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg className="w-10 h-10 relative z-10 text-zinc-100" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         {/* Antennas */}
         <path d="M24 10V6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
         <circle cx="24" cy="5" r="2.5" fill="#f43f5e" className="animate-pulse" />
@@ -165,62 +165,7 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
   return (
     <div className="flex flex-col h-full relative w-full pt-16">
 
-      {/* Active Context Header (Pinned Toggles) — fixed so it never scrolls away */}
-      <div className="fixed top-4 left-0 md:left-64 right-0 flex justify-center z-[60] pointer-events-none">
-        <div className="pointer-events-auto flex flex-col items-center gap-2">
-          {/* Toggles bar */}
-          <div className="bg-white/80 backdrop-blur-md border border-zinc-200 shadow-sm rounded-full px-5 py-2.5 flex items-center gap-6">
 
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <div className="relative">
-                <input type="checkbox" className="sr-only" checked={storeMemories} onChange={() => setStoreMemories(!storeMemories)} />
-                <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${storeMemories ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
-                <div className={`absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transform transition-transform duration-300 ease-in-out ${storeMemories ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
-                <Database className="w-3.5 h-3.5" />
-                <span>Save Memory</span>
-              </div>
-            </label>
-
-            <div className="w-px h-4 bg-zinc-200"></div>
-
-            <label className="flex items-center gap-2 cursor-pointer group">
-              <div className="relative">
-                <input type="checkbox" className="sr-only" checked={useProfile} onChange={() => setUseProfile(!useProfile)} />
-                <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${useProfile ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
-                <div className={`absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transform transition-transform duration-300 ease-in-out ${useProfile ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>Use Memory</span>
-              </div>
-            </label>
-
-          </div>
-
-          {/* Mascot Reminder Bubble */}
-          {showMascotReminder && (
-            <div className="bg-white border border-zinc-200 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-2xl px-4 py-2 flex items-center gap-3 max-w-sm mt-1 animate-in fade-in slide-in-from-top-2 duration-200">
-              <MiniMascot />
-              <div className="flex-1 text-xs text-zinc-700 leading-tight">
-                {storeMemories ? (
-                  <span><strong>Memory is On:</strong> I am active and saving your important facts.</span>
-                ) : (
-                  <span><strong>Memory is Off:</strong> No memory is being recorded.</span>
-                )}
-              </div>
-              <button
-                onClick={() => setShowMascotReminder(false)}
-                className="text-zinc-400 hover:text-zinc-600 transition-colors p-0.5 hover:bg-zinc-100 rounded-full cursor-pointer flex items-center justify-center"
-                title="Dismiss"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* Intro section */}
       {messages.length === 0 && (
@@ -230,7 +175,7 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
       )}
 
       {/* Message List */}
-      <div className="flex flex-col gap-2 w-full pb-36 pt-4">
+      <div className="flex flex-col gap-2 w-full pb-64 pt-4">
         {messages.map((msg, idx) => renderMessageWithEvents(msg, idx))}
 
         {isLoading && (
@@ -255,7 +200,30 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
       {/* Floating Input Area (Perplexity Style) */}
       <div className="fixed bottom-6 left-0 md:left-64 right-0 px-4 md:px-8 z-40 flex justify-center pointer-events-none">
         <div className="w-full max-w-3xl pointer-events-auto">
-          <form onSubmit={handleSubmit} className="relative flex flex-col bg-white border border-zinc-200 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-zinc-300 focus-within:shadow-[0_12px_40px_rgb(0,0,0,0.12)] transition-all duration-200">
+
+          <form onSubmit={handleSubmit} className="relative flex flex-col w-full bg-white border border-zinc-200 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-zinc-300 focus-within:shadow-[0_12px_40px_rgb(0,0,0,0.12)] transition-all duration-200">
+            
+            {/* Mascot Reminder Bubble (Integrated Incognito Header) */}
+            {showMascotReminder && (
+              <div className="bg-zinc-50/80 border-b border-zinc-100 px-5 py-3 flex items-center gap-3 w-full animate-in fade-in duration-200">
+                <MiniMascot />
+                <div className="flex-1 text-sm text-zinc-600 font-medium leading-tight">
+                  {storeMemories ? (
+                    <span>Memory is On. I am active and saving your important facts.</span>
+                  ) : (
+                    <span>Memory is Off. No memory is being recorded.</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowMascotReminder(false)}
+                  className="text-zinc-500 hover:text-zinc-800 text-xs font-medium transition-colors px-2 py-1 rounded-md hover:bg-zinc-200 cursor-pointer"
+                  title="Dismiss"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
 
             <textarea
               ref={textareaRef}
@@ -268,9 +236,9 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
                 }
               }}
               className="w-full bg-transparent border-0 pt-4 pb-2 px-4 text-base text-zinc-900 placeholder-zinc-400 focus:ring-0 focus:outline-none resize-none overflow-y-auto no-scrollbar"
-              style={{ minHeight: '28px', maxHeight: '200px' }}
+              style={{ minHeight: '52px', maxHeight: '200px' }}
               placeholder="Ask anything..."
-              rows={1}
+              rows={2}
             />
 
             <div className="flex items-center justify-between px-3 pb-3 pt-1">
@@ -278,6 +246,35 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
                 <button type="button" className="p-2 text-zinc-400 hover:text-zinc-700 bg-zinc-50 hover:bg-zinc-100 rounded-full transition-colors flex items-center gap-1.5">
                   <Plus className="w-4 h-4" />
                 </button>
+                
+                {/* Toggles Moved Here */}
+                <div className="flex items-center gap-4 px-2">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only" checked={storeMemories} onChange={() => setStoreMemories(!storeMemories)} />
+                      <div className={`block w-7 h-4 rounded-full transition-colors duration-300 ease-in-out ${storeMemories ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
+                      <div className={`absolute left-0.5 top-0.5 bg-white w-3 h-3 rounded-full transform transition-transform duration-300 ease-in-out ${storeMemories ? 'translate-x-3' : 'translate-x-0'}`}></div>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
+                      <Database className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Save Memory</span>
+                    </div>
+                  </label>
+
+                  <div className="w-px h-3 bg-zinc-200"></div>
+
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <div className="relative">
+                      <input type="checkbox" className="sr-only" checked={useProfile} onChange={() => setUseProfile(!useProfile)} />
+                      <div className={`block w-7 h-4 rounded-full transition-colors duration-300 ease-in-out ${useProfile ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
+                      <div className={`absolute left-0.5 top-0.5 bg-white w-3 h-3 rounded-full transform transition-transform duration-300 ease-in-out ${useProfile ? 'translate-x-3' : 'translate-x-0'}`}></div>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
+                      <UserCheck className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Use Memory</span>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">

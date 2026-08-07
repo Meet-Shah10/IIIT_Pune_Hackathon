@@ -38,7 +38,12 @@ router.get('/:userId', async (req, res) => {
   const { status } = req.query; // e.g., ?status=active
   try {
     const filter = { userId };
-    if (status) filter.status = status;
+    if (status) {
+      filter.status = status;
+    } else {
+      filter.status = { $ne: 'archived' };
+    }
+
     const memories = await Memory.find(filter).sort({ createdAt: -1 });
     res.json(memories);
   } catch (err) {
@@ -51,8 +56,11 @@ router.get('/:userId', async (req, res) => {
 router.delete('/:memoryId', async (req, res) => {
   const { memoryId } = req.params;
   try {
-    const mem = await Memory.findByIdAndUpdate(memoryId, { status: 'archived' }, { new: true });
+    const mem = await Memory.findById(memoryId);
     if (!mem) return res.status(404).json({ error: 'Memory not found' });
+
+    mem.status = 'archived';
+    await mem.save();
 
     await MemoryEvent.create({
       userId: mem.userId,
