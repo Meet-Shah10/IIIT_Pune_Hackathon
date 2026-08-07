@@ -7,6 +7,7 @@ const { extractMemoryAndRespond } = require('./services/memoryService');
 const { classifySensitivity } = require('./services/privacyClassifier');
 const Memory = require('./models/Memory');
 const MemoryEvent = require('./models/MemoryEvent');
+const Message = require('./models/Message');
 const memoryRoutes = require('./routes/memoryRoutes');
 const userIdMiddleware = require('./middleware/userId');
 
@@ -22,10 +23,10 @@ app.use(userIdMiddleware);
 connectDB();
 
 // -------------------------------------------------------------------
-// Primary chat endpoint – now respects memoryEnabled toggle
+// Primary chat endpoint – now respects memory & session history
 // -------------------------------------------------------------------
 app.post('/api/chat', async (req, res) => {
-  const { userId, sessionId, message, memoryEnabled, useContext } = req.body;
+  const { userId, sessionId, message, memoryEnabled, useContext, language } = req.body;
   console.log('Payload received:', req.body);
 
   if (!userId || !sessionId || !message) {
@@ -33,24 +34,44 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
-    // 1️⃣ Pull active memories only if "Use Memory" toggle is on
-    let systemPrompt = '';
+    // 1️⃣ Fetch recent chat history (last 15 messages for this session)
+    const rawHistory = await Message.find({ sessionId })
+      .sort({ createdAt: -1 })
+      .limit(15);
+    const recentHistory = rawHistory.reverse();
+
+    const promptParts = [];
+
+    // Language requirement
+    const langName = typeof language === 'object' ? language?.name : language;
+    if (langName) {
+      promptParts.push(`Language directive: You MUST write the conversational "reply" in ${langName}.`);
+    }
+
+    // 2️⃣ Pull active memories (negotiated facts) if "Use Memory" toggle is on
     if (useContext) {
       const activeMemories = await Memory.find({ userId, status: 'active' });
       if (activeMemories.length) {
         const facts = activeMemories
           .map(m => `- ${m.content} (category: ${m.category})`)
           .join('\n');
-        systemPrompt = `You have the following known facts about the user:\n${facts}\nUse them when replying.`;
+        promptParts.push(`You have the following known facts about the user:\n${facts}\nUse them when replying.`);
       }
     }
 
-    // 2️⃣ Extract memory & response (systemPrompt passed as second arg)
-    const extracted = await extractMemoryAndRespond(message, systemPrompt);
+    const systemPrompt = promptParts.join('\n\n');
 
-    // 3️⃣ If memory enabled and a negotiation_prompt exists, classify & store
+    // 3️⃣ Feed both Recent Chat History & Negotiated Facts into LLM call
+    const extracted = await extractMemoryAndRespond(message, systemPrompt, recentHistory);
+    const replyContent = extracted?.reply || extracted?.message || extracted?.response || 'I am processing your request.';
+
+    // 4️⃣ Save User's new message and AI's response back to MongoDB
+    await Message.create({ userId, sessionId, role: 'user', content: message });
+    await Message.create({ userId, sessionId, role: 'assistant', content: replyContent });
+
+    // 5️⃣ If memory enabled and a negotiation_prompt exists, classify & store
     let memorySaved = false;
-    if (memoryEnabled && extracted.negotiation_prompt) {
+    if (memoryEnabled && extracted?.negotiation_prompt) {
       const { content, category } = extracted.negotiation_prompt;
       const classification = await classifySensitivity(content, category);
 
@@ -78,15 +99,27 @@ app.post('/api/chat', async (req, res) => {
       memorySaved = true;
     }
 
-    // 4️⃣ Respond
+    // 6️⃣ Respond
     return res.json({
-      reply: extracted.reply,
-      negotiation_prompt: extracted.negotiation_prompt || null,
+      reply: replyContent,
+      negotiation_prompt: extracted?.negotiation_prompt || null,
       memorySaved,
     });
   } catch (err) {
     console.error('Memory extraction error:', err);
     return res.status(500).json({ error: 'Failed to process chat', details: err.message });
+  }
+});
+
+// GET endpoint to retrieve session chat history
+app.get('/api/chat/history/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  try {
+    const history = await Message.find({ sessionId }).sort({ createdAt: 1 });
+    return res.json(history);
+  } catch (err) {
+    console.error('Fetch history error:', err);
+    return res.status(500).json({ error: 'Failed to fetch history' });
   }
 });
 

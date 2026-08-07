@@ -21,7 +21,15 @@ print("Enter session ID (default: test_session): ", end="")
 session_id = input().strip() or "test_session"
 
 print("Enter your message: ", end="")
-message = input().strip()
+import re
+from indic_transliteration import sanscript
+
+def transliterate_for_riva(text: str) -> str:
+    if re.search(r'[\u0900-\u097F]', text):
+        return sanscript.transliterate(text, sanscript.DEVANAGARI, sanscript.ITRANS)
+    return text
+
+message = transliterate_for_riva(message)
 
 payload = {
     "userId": user_id,
