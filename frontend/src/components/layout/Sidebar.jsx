@@ -4,14 +4,14 @@ import { Plus, Monitor, LayoutDashboard, GitCommit, Settings, ChevronDown, Bell,
 export function Sidebar() {
   return (
     <nav className="fixed left-0 top-0 h-full w-64 bg-[#f9f9f9] border-r border-zinc-200 flex-col z-40 hidden md:flex transition-all duration-200 ease-in-out">
-      
+
       {/* Top Header */}
       <div className="px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Minimalist Logo Icon */}
           <div className="w-6 h-6 flex items-center justify-center">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-zinc-800">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
         </div>
@@ -27,49 +27,46 @@ export function Sidebar() {
           <span>New</span>
         </button>
       </div>
-      
+
       {/* Primary Links */}
       <div className="px-4 mt-4 space-y-0.5">
-        <NavLink 
+        <NavLink
           to="/"
-          className={({ isActive }) => 
-            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
-              isActive 
-                ? 'bg-zinc-200/50 text-zinc-900' 
-                : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
+          className={({ isActive }) =>
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
+              ? 'bg-zinc-200/50 text-zinc-900'
+              : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
             }`
           }
         >
           <Monitor className="w-4 h-4" />
           <span>Chat</span>
         </NavLink>
-        
-        <NavLink 
-          to="/timeline"
-          className={({ isActive }) => 
-            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
-              isActive 
-                ? 'bg-zinc-200/50 text-zinc-900' 
-                : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
-            }`
-          }
-        >
-          <GitCommit className="w-4 h-4" />
-          <span>Timeline</span>
-        </NavLink>
 
-        <NavLink 
+        <NavLink
           to="/dashboard"
-          className={({ isActive }) => 
-            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
-              isActive 
-                ? 'bg-zinc-200/50 text-zinc-900' 
-                : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
+          className={({ isActive }) =>
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
+              ? 'bg-zinc-200/50 text-zinc-900'
+              : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
             }`
           }
         >
           <LayoutDashboard className="w-4 h-4" />
           <span>Dashboard</span>
+        </NavLink>
+
+        <NavLink
+          to="/timeline"
+          className={({ isActive }) =>
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
+              ? 'bg-zinc-200/50 text-zinc-900'
+              : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
+            }`
+          }
+        >
+          <GitCommit className="w-4 h-4" />
+          <span>Timeline</span>
         </NavLink>
 
         <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900 transition-all duration-200 text-sm font-medium">
@@ -99,7 +96,7 @@ export function Sidebar() {
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-full bg-zinc-300 flex items-center justify-center">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-zinc-600">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
               </svg>
             </div>
             <span className="text-xs font-medium text-zinc-700 truncate max-w-[120px]">harshlal0155935</span>
