@@ -9,6 +9,7 @@ const Memory = require('./models/Memory');
 const MemoryEvent = require('./models/MemoryEvent');
 const Message = require('./models/Message');
 const memoryRoutes = require('./routes/memoryRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 const userIdMiddleware = require('./middleware/userId');
 
 const app = express();
@@ -166,6 +167,7 @@ app.get('/api/chat/history/:sessionId', async (req, res) => {
 // Memory CRUD endpoints (future dashboard)
 // -------------------------------------------------------------------
 app.use('/api/memories', memoryRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);

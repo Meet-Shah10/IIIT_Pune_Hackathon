@@ -76,4 +76,13 @@ export const api = {
     if (!res.ok) throw new Error('Failed to fetch chat history');
     return res.json();
   },
+
+  // Get aggregated dashboard stats (counts, privacy breakdown, risk score, recent activity)
+  getDashboardStats: async () => {
+    const res = await fetch(`${API_BASE}/dashboard/stats/${USER_ID}`, {
+      headers: { 'x-user-id': USER_ID },
+    });
+    if (!res.ok) throw new Error('Failed to fetch dashboard stats');
+    return res.json();
+  },
 };
