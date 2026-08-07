@@ -158,7 +158,7 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
                   handleSubmit(e)
                 }
               }}
-              className="w-full bg-transparent border-0 pt-4 pb-2 px-4 text-base text-zinc-900 placeholder-zinc-400 focus:ring-0 resize-none max-h-40 no-scrollbar" 
+              className="w-full bg-transparent border-0 pt-4 pb-2 px-4 text-base text-zinc-900 placeholder-zinc-400 focus:ring-0 focus:outline-none resize-none max-h-40 no-scrollbar" 
               placeholder="Ask anything..." 
               rows={1}
             />
