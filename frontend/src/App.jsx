@@ -5,6 +5,7 @@ import { Layout } from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
 import ChatPage from './pages/ChatPage'
 import DashboardOverview from './pages/DashboardOverview'
+import DashboardPage from './pages/DashboardPage'
 import MemoryTimeline from './pages/MemoryTimeline'
 
 const queryClient = new QueryClient()
@@ -33,6 +34,7 @@ function App() {
             }>
               <Route index element={<ChatPage />} />
               <Route path="dashboard" element={<DashboardOverview />} />
+              <Route path="vault" element={<DashboardPage />} />
               <Route path="timeline" element={<MemoryTimeline />} />
             </Route>
             
@@ -44,3 +46,4 @@ function App() {
 }
 
 export default App
+

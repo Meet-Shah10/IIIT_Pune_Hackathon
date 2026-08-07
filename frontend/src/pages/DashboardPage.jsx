@@ -1,17 +1,18 @@
 import { useState } from 'react'
 import { Edit2, Trash2 } from 'lucide-react'
+import MemoryRelationshipMap from '../components/dashboard/MemoryRelationshipMap'
 
 // Dummy Data
 const initialMemories = [
   {
     id: 1,
-    content: 'Preparing for GATE 2027',
-    category: 'goal',
+    content: 'Preparing for GATE 2027 and DBMS coursework',
+    category: 'education',
     sensitivity: 'Medium',
   },
   {
     id: 2,
-    content: 'Prefers Python for backend development',
+    content: 'Prefers Python for backend development and React for UI',
     category: 'preference',
     sensitivity: 'Low',
   },
@@ -23,11 +24,24 @@ const initialMemories = [
   },
   {
     id: 4,
-    content: 'Loves sci-fi movies and reading classic literature',
-    category: 'interest',
+    content: 'Drinks 2 cups of black coffee every morning at 8 AM',
+    category: 'habit',
+    sensitivity: 'Low',
+  },
+  {
+    id: 5,
+    content: 'Living in Pune, Maharashtra for undergraduate studies',
+    category: 'personal',
+    sensitivity: 'Medium',
+  },
+  {
+    id: 6,
+    content: 'Enjoys sci-fi novels and classic literature',
+    category: 'miscellaneous',
     sensitivity: 'Low',
   }
 ]
+
 
 const auditEvents = [
   {
@@ -97,16 +111,23 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-white p-8 lg:p-12 font-body-base">
       
       {/* Header */}
-      <div>
+      <div className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Memory Vault</h1>
-        <p className="text-sm text-zinc-500 mt-1">Review and manage what the AI remembers about you</p>
+        <p className="text-sm text-zinc-500 mt-1">Review, audit, and negotiate what the AI remembers about you</p>
       </div>
 
+      {/* Interactive Memory Relationship Graph */}
+      <MemoryRelationshipMap 
+        memories={memories} 
+        onForgetMemory={handleForget} 
+      />
+
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mt-6">
         
         {/* Left/Center Area (span 2 cols) - "Active Context" */}
         <div className="lg:col-span-2">
+          <h2 className="text-sm font-semibold text-zinc-900 mb-4 uppercase tracking-wide">Active Context Records</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {memories.map(memory => (
               <div 
@@ -160,9 +181,6 @@ export default function DashboardPage() {
             <div className="border-l-2 border-zinc-200 ml-2 pl-4 space-y-6">
               {auditEvents.map(event => (
                 <div key={event.id} className="relative">
-                  {/* The dot is positioned exactly on top of the left border. 
-                      Since the container has pl-4 (16px), -left-[21px] brings it back 16px to the border edge, 
-                      and another 5px to center the 10px dot over the 2px border. */}
                   <div className={`absolute w-2.5 h-2.5 rounded-full ${getDotColor(event.type)} -left-[21px] top-1.5 border-2 border-zinc-50`} />
                   
                   <div className="text-xs text-zinc-400 mb-1">{event.timestamp}</div>
