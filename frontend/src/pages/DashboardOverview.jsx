@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Database, Timer, Trash2, Shield, ShieldAlert } from 'lucide-react'
 import MemoryRelationshipMap from '../components/dashboard/MemoryRelationshipMap'
+import ReviewModal from '../components/dashboard/ReviewModal'
 import { api } from '../lib/api'
 
 function formatTimeAgo(dateStr) {
@@ -22,13 +23,15 @@ const defaultStats = {
   lastDeletionAt: null,
   privacyBreakdown: { high: 0, medium: 0, low: 100 },
   riskScore: 'LOW',
-  recentActivity: [],
+  upcomingRemovals: [],
+  expiring24hCount: 0,
 }
 
 export default function DashboardOverview() {
   const [memories, setMemories] = useState([])
   const [stats, setStats] = useState(defaultStats)
   const [loading, setLoading] = useState(true)
+  const [reviewingMemory, setReviewingMemory] = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -64,12 +67,24 @@ export default function DashboardOverview() {
       // Refresh stats after deletion
       const updated = await api.getDashboardStats()
       if (updated) setStats(updated)
+      setReviewingMemory(null)
     } catch (error) {
       console.error('Failed to delete memory:', error)
     }
   }
 
-  const { totalActive, newThisWeek, totalDeleted, lastDeletionAt, privacyBreakdown, riskScore, recentActivity } = stats
+  const handleUpdateRetention = async (id, data) => {
+    try {
+      await api.updateMemory(id, data)
+      const updated = await api.getDashboardStats()
+      if (updated) setStats(updated)
+      setReviewingMemory(null)
+    } catch (error) {
+      console.error('Failed to update retention:', error)
+    }
+  }
+
+  const { totalActive, newThisWeek, totalDeleted, lastDeletionAt, privacyBreakdown, riskScore, upcomingRemovals, expiring24hCount } = stats
 
   const riskBadge = riskScore === 'HIGH'
     ? 'bg-rose-50 text-rose-700'
@@ -114,16 +129,23 @@ export default function DashboardOverview() {
           )}
         </div>
 
-        {/* Pending Expirations — no expiresAt field, show N/A */}
-        <div className="bg-zinc-50/50 border border-zinc-200 rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+        {/* Pending Expirations */}
+        <div className="bg-red-50/30 border border-red-100 rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-xs font-semibold text-zinc-400 tracking-wider uppercase">Pending Expirations</h3>
-            <Timer className="w-4 h-4 text-zinc-300" />
+            <h3 className="text-xs font-semibold text-red-500 tracking-wider uppercase">Pending Expirations (24h)</h3>
+            <Timer className="w-4 h-4 text-red-400" />
           </div>
-          <div className="text-4xl font-bold text-zinc-300 tracking-tight">N/A</div>
-          <div className="text-xs font-medium text-zinc-400 mt-2">
-            Expiry tracking not enabled
-          </div>
+          {loading ? (
+            <div className="h-10 w-24 bg-red-100/50 animate-pulse rounded" />
+          ) : (
+            <>
+              <div className="text-4xl font-bold text-red-600 tracking-tight">{expiring24hCount}</div>
+              <div className="text-xs font-medium text-red-500 mt-2 flex items-center gap-1">
+                <ShieldAlert className="w-3 h-3" />
+                Requires review
+              </div>
+            </>
+          )}
         </div>
 
         {/* Total Deleted */}
@@ -148,43 +170,77 @@ export default function DashboardOverview() {
       {/* Middle Row: Recent Activity + Privacy Level */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
 
-        {/* Recent Activity (2 cols) — replaces fake "Upcoming Removals" table */}
-        <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden">
+        {/* Upcoming Removals (2 cols) */}
+        <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden flex flex-col">
           <div className="px-6 py-5 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
-            <h2 className="text-sm font-semibold text-zinc-900">Recent Activity</h2>
+            <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
+              <Timer className="w-4 h-4 text-red-500" />
+              Upcoming Removals
+            </h2>
           </div>
 
-          <div className="p-6">
-            {loading ? (
-              <div className="space-y-4">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex gap-3 items-start">
-                    <div className="w-2.5 h-2.5 mt-1.5 rounded-full bg-zinc-100 animate-pulse flex-shrink-0" />
-                    <div className="flex-1 space-y-1">
-                      <div className="h-3 bg-zinc-100 animate-pulse rounded w-3/4" />
-                      <div className="h-3 bg-zinc-100 animate-pulse rounded w-1/3" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : recentActivity.length === 0 ? (
-              <p className="text-sm text-zinc-400 text-center py-8">No activity yet.</p>
-            ) : (
-              <div className="border-l-2 border-zinc-200 ml-1 pl-4 space-y-5">
-                {recentActivity.map((event) => (
-                  <div key={event._id} className="relative">
-                    <div className={`absolute w-2.5 h-2.5 rounded-full ${getDotColor(event.action)} -left-[21px] top-1.5 border-2 border-white`} />
-                    <div className="text-xs text-zinc-400 mb-0.5">{formatTimeAgo(event.createdAt)}</div>
-                    <div className="text-sm text-zinc-800 font-medium">
-                      {event.action === 'forgotten' ? 'Removed' : 'Saved'}: {event.memoryContent}
-                    </div>
-                    {event.memoryCategory && (
-                      <span className="text-[10px] uppercase tracking-wide text-zinc-400">{event.memoryCategory}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="overflow-x-auto flex-1">
+            <table className="w-full text-left border-collapse min-w-[500px]">
+              <thead>
+                <tr className="border-b border-zinc-100 text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 font-medium">Memory</th>
+                  <th className="px-6 py-4 font-medium text-center">Sensitivity</th>
+                  <th className="px-6 py-4 font-medium">Time Remaining</th>
+                  <th className="px-6 py-4 font-medium text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {loading ? (
+                  [...Array(3)].map((_, i) => (
+                    <tr key={i} className="border-b border-zinc-50">
+                      <td className="px-6 py-4"><div className="h-4 bg-zinc-100 animate-pulse rounded w-3/4" /></td>
+                      <td className="px-6 py-4"><div className="h-5 bg-zinc-100 animate-pulse rounded-full w-16 mx-auto" /></td>
+                      <td className="px-6 py-4"><div className="h-4 bg-zinc-100 animate-pulse rounded w-16" /></td>
+                      <td className="px-6 py-4"><div className="h-6 bg-zinc-100 animate-pulse rounded w-16 ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : upcomingRemovals.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-8 text-center text-zinc-400">
+                      No memories scheduled for deletion.
+                    </td>
+                  </tr>
+                ) : (
+                  upcomingRemovals.map((m) => {
+                    const daysLeft = Math.ceil((new Date(m.expiresAt) - new Date()) / (1000 * 60 * 60 * 24))
+                    const isUrgent = daysLeft <= 1
+                    
+                    return (
+                      <tr key={m._id} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-zinc-800 truncate max-w-[200px]" title={m.content}>
+                          {m.content}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            m.sensitivity === 'high' || m.sensitivity === 'critical' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                            m.sensitivity === 'medium' ? 'bg-amber-50 text-amber-700 border border-amber-100' :
+                            'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                          }`}>
+                            {m.sensitivity}
+                          </span>
+                        </td>
+                        <td className={`px-6 py-4 font-medium ${isUrgent ? 'text-red-600' : 'text-zinc-600'}`}>
+                          {daysLeft < 1 ? 'Today' : `${daysLeft} day${daysLeft > 1 ? 's' : ''}`}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button 
+                            onClick={() => setReviewingMemory(m)}
+                            className="px-3 py-1.5 text-xs font-medium text-zinc-600 bg-white border border-zinc-200 rounded-md hover:bg-zinc-50 hover:text-zinc-900 transition-colors"
+                          >
+                            Review
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -274,6 +330,15 @@ export default function DashboardOverview() {
         onForgetMemory={handleForget}
       />
 
+      {/* Review Modal */}
+      {reviewingMemory && (
+        <ReviewModal
+          memory={reviewingMemory}
+          onClose={() => setReviewingMemory(null)}
+          onSave={handleUpdateRetention}
+          onDelete={handleForget}
+        />
+      )}
     </div>
   )
 }

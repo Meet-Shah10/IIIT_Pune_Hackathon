@@ -9,6 +9,8 @@ const MemorySchema = new mongoose.Schema({
   reasoning: { type: String, default: '' },
   source: { type: String, default: 'chat' },
   status: { type: String, enum: ['active', 'archived'], default: 'active' },
+  expiresAt: { type: Date },
+  autoDelete: { type: Boolean, default: true },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Memory', MemorySchema);

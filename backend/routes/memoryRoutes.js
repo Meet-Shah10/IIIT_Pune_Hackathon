@@ -81,4 +81,36 @@ router.delete('/:memoryId', async (req, res) => {
   }
 });
 
+// Update memory (e.g. change expiresAt or autoDelete)
+router.patch('/:memoryId', async (req, res) => {
+  const { memoryId } = req.params;
+  const { expiresAt, autoDelete } = req.body;
+  try {
+    const mem = await Memory.findById(memoryId);
+    if (!mem) return res.status(404).json({ error: 'Memory not found' });
+
+    if (expiresAt !== undefined) mem.expiresAt = expiresAt;
+    if (autoDelete !== undefined) mem.autoDelete = autoDelete;
+
+    await mem.save();
+
+    await MemoryEvent.create({
+      userId: mem.userId,
+      memoryId,
+      action: 'updated',
+      detail: `User updated retention settings`,
+      reason: 'Manual retention policy change',
+      memoryContent: mem.content,
+      memoryCategory: mem.category || 'general',
+      memorySensitivity: mem.sensitivity || 'low',
+      savedAt: mem.createdAt,
+    });
+
+    res.json({ message: 'Memory updated', memory: mem });
+  } catch (err) {
+    console.error('Error updating memory:', err);
+    res.status(500).json({ error: 'Failed to update memory' });
+  }
+});
+
 module.exports = router;

@@ -109,6 +109,9 @@ app.post('/api/chat', async (req, res) => {
       const classification = await classifySensitivity(content, category);
       const memoryReason = reason || classification.reasoning || 'User shared a durable personal detail';
 
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+
       const newMemory = await Memory.create({
         userId,
         content,
@@ -116,6 +119,8 @@ app.post('/api/chat', async (req, res) => {
         sensitivity: classification.sensitivity,
         reasoning: memoryReason,
         source: classification.source || 'chat',
+        expiresAt,
+        autoDelete: true,
       });
 
       await MemoryEvent.create({

@@ -54,6 +54,20 @@ export const api = {
     return res.json();
   },
 
+  // Update a memory (e.g. expiresAt, autoDelete)
+  updateMemory: async (id, data) => {
+    const res = await fetch(`${API_BASE}/memories/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': USER_ID,
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update memory');
+    return res.json();
+  },
+
   // Create a fresh chat session on the backend
   createChatSession: async (userId = USER_ID) => {
     const res = await fetch(`${API_BASE}/chat/sessions`, {
