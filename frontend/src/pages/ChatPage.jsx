@@ -13,10 +13,7 @@ export default function ChatPage() {
   const allowStorage = true
   const useContext = true
 
-  const { data: messages = [], isLoading: isHistoryLoading } = useQuery({
-    queryKey: ['chatHistory'],
-    queryFn: async () => [], // Dummy placeholder – can be replaced later
-  })
+  const [messages, setMessages] = useState([])
 
   const userId = getUserId();
   const sessionId = getSessionId();
@@ -33,26 +30,19 @@ export default function ChatPage() {
   })
 
   const chatMutation = useMutation({
-    mutationFn: async ({ content, memoryEnabled, useContext }) => {
-      // Send request with user/session info and both memory toggles
-      return api.sendChat(content, memoryEnabled, useContext, sessionId);
+    mutationFn: async ({ content, memoryEnabled, useContext, language }) => {
+      // Send request with user/session info and both memory toggles + language
+      return api.sendChat(content, memoryEnabled, useContext, sessionId, language);
     },
-    onMutate: async ({ content, memoryEnabled, useContext }) => {
-      await queryClient.cancelQueries({ queryKey: ['chatHistory'] })
-      const previousMessages = queryClient.getQueryData(['chatHistory'])
-      
-      const optimisticUserMsg = {
-        _id: `temp-${Date.now()}`,
-        role: 'user',
-        content: content,
-        createdAt: new Date().toISOString()
-      }
-      
-      queryClient.setQueryData(['chatHistory'], old => [...(old || []), optimisticUserMsg])
-      return { previousMessages }
-    },
-    onError: (err, newContent, context) => {
-      queryClient.setQueryData(['chatHistory'], context.previousMessages)
+    onError: (err) => {
+      console.error('Chat error:', err);
+      const errorMsg = {
+        _id: `error-${Date.now()}`,
+        role: 'assistant',
+        content: 'Sorry, there was an error processing your message.',
+        createdAt: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
     },
     onSuccess: (data) => {
       // Append assistant reply to chat history
@@ -64,7 +54,7 @@ export default function ChatPage() {
           content: replyContent,
           createdAt: new Date().toISOString(),
         };
-        queryClient.setQueryData(['chatHistory'], old => [...(old || []), assistantMsg]);
+        setMessages(prev => [...prev, assistantMsg]);
       }
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['memories'] });
@@ -72,8 +62,15 @@ export default function ChatPage() {
     }
   })
 
-  const handleSendMessage = ({ content, memoryEnabled, useContext }) => {
-    chatMutation.mutate({ content, memoryEnabled, useContext })
+  const handleSendMessage = ({ content, memoryEnabled, useContext, language }) => {
+    const userMsg = {
+      _id: `user-${Date.now()}`,
+      role: 'user',
+      content: content,
+      createdAt: new Date().toISOString()
+    }
+    setMessages(prev => [...prev, userMsg])
+    chatMutation.mutate({ content, memoryEnabled, useContext, language })
   }
 
   return (
@@ -108,7 +105,7 @@ export default function ChatPage() {
           <ChatWindow 
             messages={messages} 
             events={events}
-            isLoading={isHistoryLoading || chatMutation.isPending} 
+            isLoading={chatMutation.isPending} 
             onSendMessage={handleSendMessage} 
           />
         </div>

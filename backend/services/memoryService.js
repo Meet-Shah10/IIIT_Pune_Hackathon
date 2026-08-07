@@ -23,7 +23,8 @@ async function extractMemoryAndRespond(message, systemPrompt = '') {
 Rules:
 1. Extract ONLY durable, long-term personal facts.
 2. Ignore transient requests, temporary states, or standard chitchat.
-3. If no durable fact exists, set "negotiation_prompt" to null.`
+3. If no durable fact exists, set "negotiation_prompt" to null.
+4. Adhere strictly to any Language directive specified in the prompt for the "reply" field.`
         },
         { role: 'user', content: message }
     );

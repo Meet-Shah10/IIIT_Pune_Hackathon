@@ -25,7 +25,7 @@ connectDB();
 // Primary chat endpoint – now respects memoryEnabled toggle
 // -------------------------------------------------------------------
 app.post('/api/chat', async (req, res) => {
-  const { userId, sessionId, message, memoryEnabled, useContext } = req.body;
+  const { userId, sessionId, message, memoryEnabled, useContext, language } = req.body;
   console.log('Payload received:', req.body);
 
   if (!userId || !sessionId || !message) {
@@ -33,17 +33,26 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
+    const promptParts = [];
+
+    // Language requirement
+    const langName = typeof language === 'object' ? language?.name : language;
+    if (langName) {
+      promptParts.push(`Language directive: You MUST write the conversational "reply" in ${langName}.`);
+    }
+
     // 1️⃣ Pull active memories only if "Use Memory" toggle is on
-    let systemPrompt = '';
     if (useContext) {
       const activeMemories = await Memory.find({ userId, status: 'active' });
       if (activeMemories.length) {
         const facts = activeMemories
           .map(m => `- ${m.content} (category: ${m.category})`)
           .join('\n');
-        systemPrompt = `You have the following known facts about the user:\n${facts}\nUse them when replying.`;
+        promptParts.push(`You have the following known facts about the user:\n${facts}\nUse them when replying.`);
       }
     }
+
+    const systemPrompt = promptParts.join('\n\n');
 
     // 2️⃣ Extract memory & response (systemPrompt passed as second arg)
     const extracted = await extractMemoryAndRespond(message, systemPrompt);

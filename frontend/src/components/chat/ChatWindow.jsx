@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Plus, Mic, ArrowUp, Cpu, Copy, Edit3, Trash2, RefreshCw, Database, UserCheck } from 'lucide-react'
 import { MemoryInterceptCard } from './MemoryInterceptCard'
+import LanguageSelector from '../ui/LanguageSelector'
 
 export default function ChatWindow({ messages, events, isLoading, onSendMessage }) {
   const [inputValue, setInputValue] = useState('')
@@ -28,7 +29,10 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!inputValue.trim() || isLoading) return
-    onSendMessage({ content: inputValue, memoryEnabled: storeMemories, useContext: useProfile })
+    // Read the persisted language selection at submit time
+    const savedLang = localStorage.getItem('selectedLanguage')
+    const language = savedLang ? JSON.parse(savedLang) : { name: 'English', code: 'en' }
+    onSendMessage({ content: inputValue, memoryEnabled: storeMemories, useContext: useProfile, language })
     setInputValue('')
     // Reset height after send
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
@@ -125,6 +129,10 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
               <span>Use Memory</span>
             </div>
           </label>
+
+          <div className="w-px h-4 bg-zinc-200"></div>
+
+          <LanguageSelector />
 
         </div>
       </div>

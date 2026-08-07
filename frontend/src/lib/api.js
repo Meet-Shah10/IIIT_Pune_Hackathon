@@ -6,7 +6,7 @@ const USER_ID = getUserId();
 
 export const api = {
   // Send a chat message with required payload fields
-  sendChat: async (message, memoryEnabled, useContext, sessionId) => {
+  sendChat: async (message, memoryEnabled, useContext, sessionId, language) => {
     const res = await fetch(`${API_BASE}/chat`, {
       method: 'POST',
       headers: {
@@ -19,6 +19,7 @@ export const api = {
         message,
         memoryEnabled,
         useContext,
+        language,
       }),
     });
     if (!res.ok) throw new Error('Chat request failed');
