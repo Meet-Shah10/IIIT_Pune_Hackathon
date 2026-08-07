@@ -13,11 +13,20 @@ export function getUserId() {
   return id;
 }
 
+export function buildSessionId() {
+  return `session_${uuidv4()}`;
+}
+
 export function getSessionId() {
   let id = sessionStorage.getItem(SESSION_ID_KEY);
   if (!id) {
-    id = `session_${uuidv4()}`;
+    id = buildSessionId();
     sessionStorage.setItem(SESSION_ID_KEY, id);
   }
+  return id;
+}
+
+export function setSessionId(id) {
+  sessionStorage.setItem(SESSION_ID_KEY, id);
   return id;
 }
