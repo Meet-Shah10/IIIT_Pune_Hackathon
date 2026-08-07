@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Plus, Mic, ArrowUp, Cpu, Copy, Edit3, Trash2, RefreshCw, Database, UserCheck, X } from 'lucide-react'
-import { MemoryInterceptCard } from './MemoryInterceptCard'
+
 import LanguageSelector from '../ui/LanguageSelector'
 
 function MiniMascot() {
@@ -134,22 +134,8 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
                   <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
-            </div>
           </div>
-          {msg.negotiationPrompt && (
-            <div className="pl-12">
-              <MemoryInterceptCard
-                detail={msg.negotiationPrompt.content}
-                category={msg.negotiationPrompt.category}
-                sensitivity={msg.negotiationPrompt.sensitivity || 'low'}
-              />
-            </div>
-          )}
-          {relatedEvents.map(ev => (
-            <div key={ev._id} className="pl-12">
-              <MemoryInterceptCard detail={ev.detail} category="fact" sensitivity="medium" />
-            </div>
-          ))}
+        </div>
         </div>
       )
     }
