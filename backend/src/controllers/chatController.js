@@ -5,21 +5,23 @@ import { processSilentExtraction } from '../services/extractionService.js'
 
 export const handleChat = async (req, res) => {
   try {
-    // We expect { message, allowStorage, useContext }
-    const { message, allowStorage, useContext } = req.body
-    
-    // Auth stub: we'll use a hardcoded user ID for the hackathon demo if req.user is missing
-    const userId = req.user ? req.user.id : '64f0a2b9e4b0a1a2b3c4d5e6' 
+    // We expect { message, allowStorage, useContext, sessionId }
+    const { message, allowStorage, useContext, sessionId } = req.body
 
-    if (!message) {
-      return res.status(400).json({ error: 'Message is required' })
+    // Auth stub: we'll use a hardcoded user ID for the hackathon demo if req.user is missing
+    const userId = req.user ? req.user.id : '64f0a2b9e4b0a1a2b3c4d5e6'
+
+    if (!message || !sessionId) {
+      return res.status(400).json({ error: 'Message and sessionId are required' })
     }
 
     // 1. Save User Message
     const userMessage = await Message.create({
-      userId,
+      sessionId,
       role: 'user',
-      content: message
+      content: message,
+      createdAt: new Date(),
+      wasFactExtracted: false,
     })
 
     // 2. Fetch context if useContext is true
@@ -36,10 +38,10 @@ export const handleChat = async (req, res) => {
     }
 
     // 3. Fetch recent history (last 10 messages)
-    const recentMessages = await Message.find({ userId })
+    const recentMessages = await Message.find({ sessionId })
       .sort({ createdAt: -1 })
       .limit(10)
-    
+
     const history = recentMessages.reverse().map(m => ({
       role: m.role,
       content: m.content
@@ -53,9 +55,11 @@ export const handleChat = async (req, res) => {
 
     // 5. Save AI Message
     const aiMessage = await Message.create({
-      userId,
+      sessionId,
       role: 'assistant',
-      content: aiResponseContent
+      content: aiResponseContent,
+      createdAt: new Date(),
+      wasFactExtracted: false,
     })
 
     // 6. Silent Extraction (Async, non-blocking)

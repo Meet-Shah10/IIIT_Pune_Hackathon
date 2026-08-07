@@ -11,7 +11,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
       ? 'Medium'
       : 'Low';
   const storageDuration = memory.status === 'forgotten'
-    ? 'Revoked'
+    ? 'Removed'
     : memory.status === 'expired'
       ? 'Expired'
       : 'Active retention';
@@ -112,7 +112,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
             onClick={onClose}
             className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-3 border border-rose-200 text-rose-600 font-semibold rounded-lg hover:bg-rose-50 transition-colors"
           >
-            <Trash2 className="w-4 h-4" /> Purge Now
+            <Trash2 className="w-4 h-4" /> Delete Now
           </button>
           
           <button className="w-full sm:w-auto flex-1 flex items-center justify-center gap-2 px-6 py-3 border border-zinc-200 text-zinc-600 font-medium rounded-lg hover:bg-zinc-50 transition-colors bg-white shadow-sm">

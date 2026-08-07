@@ -48,8 +48,8 @@ const auditEvents = [
   {
     id: 1,
     timestamp: 'Just now',
-    description: 'Memory Revoked: Allergic to peanuts',
-    type: 'revoked'
+    description: 'Memory Removed: Allergic to peanuts',
+    type: 'removed'
   },
   {
     id: 2,
@@ -72,7 +72,7 @@ const auditEvents = [
   {
     id: 5,
     timestamp: '2 days ago',
-    description: 'System Initialized',
+    description: 'Memory saved',
     type: 'settings'
   }
 ]
@@ -127,7 +127,7 @@ export default function DashboardPage() {
     switch (type) {
       case 'extracted':
         return 'bg-blue-500'
-      case 'revoked':
+      case 'removed':
         return 'bg-red-500'
       case 'settings':
       default:
@@ -201,7 +201,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Area (span 1 col) - "Audit Trail" */}
+        {/* Right Area (span 1 col) - "Activity Log" */}
         <div className="lg:col-span-1">
           <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-6 h-fit sticky top-8">
             <h2 className="text-sm font-semibold text-zinc-900 mb-6 uppercase tracking-wide">Activity Log</h2>

@@ -15,11 +15,13 @@ export default function ChatPage() {
 
   const [messages, setMessages] = useState([])
   const [sessionId, setSessionIdState] = useState(() => getSessionId())
+  const sessionIdRef = useRef(sessionId)
 
   const userId = getUserId();
   const [memories, setMemories] = useState([]);
 
   useEffect(() => {
+    sessionIdRef.current = sessionId
     api.getMemories(userId).then(setMemories).catch(console.error);
     api.getChatHistory(sessionId).then(setMessages).catch(console.error);
   }, [userId, sessionId]);
@@ -32,8 +34,8 @@ export default function ChatPage() {
 
   const chatMutation = useMutation({
     mutationFn: async ({ content, memoryEnabled, useContext, language }) => {
-      // Send request with user/session info and both memory toggles + language
-      return api.sendChat(content, memoryEnabled, useContext, sessionId, language);
+      // Send request with the latest active session id so new chats stay isolated.
+      return api.sendChat(content, memoryEnabled, useContext, sessionIdRef.current, language);
     },
     onError: (err) => {
       console.error('Chat error:', err);
@@ -95,10 +97,21 @@ export default function ChatPage() {
     chatMutation.mutate({ content, memoryEnabled, useContext, language })
   }
 
-  const handleNewChat = () => {
-    const nextSessionId = setSessionId(buildSessionId())
-    setSessionIdState(nextSessionId)
-    setMessages([])
+  const handleNewChat = async () => {
+    try {
+      const data = await api.createChatSession(userId)
+      const nextSessionId = data?.sessionId || buildSessionId()
+      const persistedSessionId = setSessionId(nextSessionId)
+      sessionIdRef.current = persistedSessionId
+      setSessionIdState(persistedSessionId)
+      setMessages([])
+    } catch (error) {
+      console.error('Failed to create new chat session:', error)
+      const fallbackSessionId = setSessionId(buildSessionId())
+      sessionIdRef.current = fallbackSessionId
+      setSessionIdState(fallbackSessionId)
+      setMessages([])
+    }
   }
 
   return (

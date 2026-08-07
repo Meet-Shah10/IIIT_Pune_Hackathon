@@ -1,20 +1,32 @@
 import mongoose from 'mongoose'
 
 const messageSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  sessionId: {
+    type: String,
     required: true,
+    index: true,
   },
   role: {
     type: String,
-    enum: ['user', 'assistant', 'system'],
+    enum: ['user', 'assistant'],
     required: true,
   },
   content: {
     type: String,
     required: true,
-  }
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  wasFactExtracted: {
+    type: Boolean,
+    default: false,
+  },
+  expiresAt: {
+    type: Date,
+    default: null,
+  },
 }, { timestamps: true })
 
 export default mongoose.model('Message', messageSchema)

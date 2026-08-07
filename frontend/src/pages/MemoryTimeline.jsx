@@ -52,7 +52,6 @@ export default function MemoryTimeline() {
 
       acc[dateKey].commits.push({
         id: event._id || event.memoryId,
-        hash: `#${String(event._id || event.memoryId || '').slice(-6)}`,
         timeAgo: createdAt.toLocaleString(),
         action: (event.action || 'updated').toUpperCase(),
         icon: event.action === 'forgotten' ? 'trash' : event.action === 'updated' ? 'edit' : 'plus',
@@ -125,8 +124,8 @@ export default function MemoryTimeline() {
     <div className="min-h-screen bg-white p-8 lg:p-12 font-body-base pb-24">
       {/* Header */}
       <div className="mb-12 max-w-4xl mx-auto">
-        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">Memory Commit History</h1>
-        <p className="text-base text-zinc-500 mt-2">A verifiable ledger of all memory transactions, extractions, and context shifts.</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">Activity Log</h1>
+        <p className="text-base text-zinc-500 mt-2">A history of all memory saved and updated.</p>
       </div>
 
       {/* Timeline Container */}
@@ -171,13 +170,13 @@ export default function MemoryTimeline() {
                       
                       {/* Header Row */}
                       <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-zinc-700">{commit.timeAgo}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-zinc-900">{commit.title}</span>
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getActionBadge(commit.action)}`}>
                             {commit.action}
                           </span>
                         </div>
-                        <span className="font-mono text-xs text-zinc-400 font-medium">{commit.hash}</span>
+                        <span className="text-sm text-zinc-400 font-medium">{commit.timeAgo}</span>
                       </div>
 
                       {/* Body */}

@@ -54,6 +54,20 @@ export const api = {
     return res.json();
   },
 
+  // Create a fresh chat session on the backend
+  createChatSession: async (userId = USER_ID) => {
+    const res = await fetch(`${API_BASE}/chat/sessions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': USER_ID,
+      },
+      body: JSON.stringify({ userId }),
+    });
+    if (!res.ok) throw new Error('Failed to create chat session');
+    return res.json();
+  },
+
   // Get chat history for a session
   getChatHistory: async (sessionId) => {
     const res = await fetch(`${API_BASE}/chat/history/${sessionId}`, {

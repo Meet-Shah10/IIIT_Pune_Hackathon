@@ -6,12 +6,12 @@ export default function ActiveContextHeader({ allowStorage, setAllowStorage, use
     <div className="sticky top-0 z-50 glass border-b border-[var(--border)] py-3 px-4 flex items-center justify-between sm:justify-end gap-4 shadow-sm">
       <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
         
-        {/* Toggle 1: Use Saved Profile */}
+        {/* Toggle 1: Use my memories */}
         <label className="flex items-center gap-3 cursor-pointer group flex-1 sm:flex-initial justify-between">
           <div className="flex items-center gap-2 text-sm">
             <Settings2 className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors" />
             <span className={cn("transition-colors", useContext ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]")}>
-              Use Saved Profile
+              Use my memories
             </span>
           </div>
           <button 
@@ -23,12 +23,12 @@ export default function ActiveContextHeader({ allowStorage, setAllowStorage, use
           </button>
         </label>
 
-        {/* Toggle 2: Extract & Store */}
+        {/* Toggle 2: Remember my details */}
         <label className="flex items-center gap-3 cursor-pointer group flex-1 sm:flex-initial justify-between border-l border-[var(--border)] pl-4 sm:pl-6">
           <div className="flex items-center gap-2 text-sm">
             <Database className="w-4 h-4 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors" />
             <span className={cn("transition-colors", allowStorage ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]")}>
-              Extract & Store
+              Remember my details
             </span>
           </div>
           <button 

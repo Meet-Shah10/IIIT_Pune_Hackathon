@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Database, Timer, Trash2, ShieldAlert } from 'lucide-react'
+import { Database, Timer, Trash2, Shield, ShieldAlert } from 'lucide-react'
 import MemoryRelationshipMap from '../components/dashboard/MemoryRelationshipMap'
 import { api } from '../lib/api'
 
@@ -114,25 +114,25 @@ export default function DashboardOverview() {
 
         <div className="bg-white border border-zinc-200 rounded-xl p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="flex justify-between items-start mb-4">
-            <h3 className="text-xs font-semibold text-zinc-500 tracking-wider uppercase">Total Data Purged</h3>
+            <h3 className="text-xs font-semibold text-zinc-500 tracking-wider uppercase">Total Data Deleted</h3>
             <Trash2 className="w-4 h-4 text-zinc-400" />
           </div>
           <div className="text-4xl font-bold text-zinc-900 tracking-tight">2.4 GB</div>
           <div className="text-xs font-medium text-zinc-500 mt-2">
-            Last purge: 2 hrs ago
+            Last deletion: 2 hrs ago
           </div>
         </div>
       </div>
 
-      {/* Middle Row: Upcoming Purges + Privacy Classification — side by side, no height stretching */}
+      {/* Middle Row: Upcoming Removals + Privacy Level — side by side, no height stretching */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
 
-        {/* Upcoming Purges (2 cols) */}
+        {/* Upcoming Removals (2 cols) */}
         <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden">
           <div className="px-6 py-5 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
             <h2 className="text-sm font-semibold text-zinc-900 flex items-center gap-2">
               <Timer className="w-4 h-4 text-red-500" />
-              Upcoming Purges
+              Upcoming Removals
             </h2>
             <button className="text-xs font-medium text-zinc-500 hover:text-zinc-800 transition-colors">View All</button>
           </div>
@@ -183,14 +183,16 @@ export default function DashboardOverview() {
           </div>
         </div>
 
-        {/* Privacy Classification (1 col) — self-contained, no height stretching */}
+        {/* Privacy Level (1 col) — self-contained, no height stretching */}
         <div className="lg:col-span-1">
           <div className="bg-white border border-zinc-200 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden">
             <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-                <ShieldAlert className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 rounded-full bg-zinc-200/50 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-5 h-5 text-zinc-600" />
               </div>
-              <h2 className="text-base font-semibold text-zinc-900 leading-tight">Privacy<br/>Classification</h2>
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight text-zinc-800">Privacy Level</h3>
+              </div>
             </div>
 
             <div className="p-6 flex flex-col items-center">
