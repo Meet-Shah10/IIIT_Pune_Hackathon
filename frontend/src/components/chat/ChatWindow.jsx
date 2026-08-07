@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { PlusCircle, Mic, Send, Cpu, CheckCheck, Copy, Edit3, Trash2, RefreshCw } from 'lucide-react'
+import { Plus, Mic, ArrowUp, Cpu, Copy, Edit3, Trash2, RefreshCw, Database, UserCheck } from 'lucide-react'
 import { MemoryInterceptCard } from './MemoryInterceptCard'
 
 export default function ChatWindow({ messages, events, isLoading, onSendMessage }) {
   const [inputValue, setInputValue] = useState('')
+  const [storeMemories, setStoreMemories] = useState(true)
+  const [useProfile, setUseProfile] = useState(true)
   const endRef = useRef(null)
 
   useEffect(() => {
@@ -17,61 +19,58 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
     setInputValue('')
   }
 
-  // To simulate the "inline" card, we check if an extraction event happened shortly after a message
-  // In a real app, the API would return a combined transcript or nested events.
   const renderMessageWithEvents = (msg, index) => {
-    // Check if there's an extraction event related to this message
     const relatedEvents = events.filter(e => e.action === 'extracted' && e.detail.includes(msg.content))
     
-    // For assistant messages, we use the MemoryVault styling
     if (msg.role === 'assistant') {
       return (
         <div key={msg._id || index} className="flex flex-col gap-2 w-full mt-4 group">
-          <div className="flex gap-3 max-w-[90%] sm:max-w-[80%]">
+          <div className="flex gap-4">
             <div className="flex-shrink-0 mt-1">
-              {/* MV Avatar Placeholder */}
-              <div className="w-6 h-6 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-bold text-white">
-                MV
+              <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center bg-white text-zinc-800">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
               </div>
             </div>
-            <div className="flex flex-col gap-2 pt-1 text-white font-body-sm text-[13px] leading-relaxed">
+            <div className="flex flex-col gap-2 pt-1.5 text-zinc-800 text-[15px] leading-relaxed max-w-[85%]">
               <p>{msg.content}</p>
               
               {/* Assistant Hover Actions */}
               <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button className="text-zinc-500 hover:text-white transition-colors" title="Copy">
+                <button className="text-zinc-400 hover:text-zinc-600 transition-colors" title="Copy">
                   <Copy className="w-4 h-4" />
                 </button>
-                <button className="text-zinc-500 hover:text-white transition-colors" title="Regenerate">
+                <button className="text-zinc-400 hover:text-zinc-600 transition-colors" title="Regenerate">
                   <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
             </div>
           </div>
-          {/* If there was an extraction event, render the card below the assistant message */}
           {relatedEvents.map(ev => (
-            <MemoryInterceptCard key={ev._id} detail={ev.detail} category="fact" sensitivity="medium" />
+            <div key={ev._id} className="pl-12">
+              <MemoryInterceptCard detail={ev.detail} category="fact" sensitivity="medium" />
+            </div>
           ))}
         </div>
       )
     }
 
-    // User message styling
     return (
-      <div key={msg._id || index} className="flex flex-col gap-1 self-end max-w-[85%] sm:max-w-[70%] mt-6 group">
-        <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-700 rounded-xl rounded-tr-sm px-4 py-3 text-white shadow-[0_4px_12px_rgba(0,0,0,0.5)] font-body-base text-[14px]">
+      <div key={msg._id || index} className="flex flex-col gap-1 self-end max-w-[80%] mt-6 group">
+        <div className="bg-zinc-100/80 border border-zinc-200/50 rounded-2xl rounded-tr-sm px-4 py-3 text-zinc-800 text-[15px] shadow-sm">
           <p>{msg.content}</p>
         </div>
         
         {/* User Hover Actions */}
         <div className="flex items-center justify-end gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="text-zinc-500 hover:text-white transition-colors" title="Edit">
+          <button className="text-zinc-400 hover:text-zinc-600 transition-colors" title="Edit">
             <Edit3 className="w-4 h-4" />
           </button>
-          <button className="text-zinc-500 hover:text-white transition-colors" title="Copy">
+          <button className="text-zinc-400 hover:text-zinc-600 transition-colors" title="Copy">
             <Copy className="w-4 h-4" />
           </button>
-          <button className="text-zinc-500 hover:text-red-400 transition-colors" title="Delete">
+          <button className="text-zinc-400 hover:text-red-500 transition-colors" title="Delete">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -80,47 +79,75 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
   }
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative w-full pt-16">
       
+      {/* Active Context Header (Pinned Toggles) */}
+      <div className="absolute top-4 left-0 right-0 flex justify-center z-40 pointer-events-none">
+        <div className="pointer-events-auto bg-white/80 backdrop-blur-md border border-zinc-200 shadow-sm rounded-full px-5 py-2.5 flex items-center gap-6">
+          
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <div className="relative">
+              <input type="checkbox" className="sr-only" checked={storeMemories} onChange={() => setStoreMemories(!storeMemories)} />
+              <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${storeMemories ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
+              <div className={`absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transform transition-transform duration-300 ease-in-out ${storeMemories ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
+              <Database className="w-3.5 h-3.5" />
+              <span>Save Memory</span>
+            </div>
+          </label>
+
+          <div className="w-px h-4 bg-zinc-200"></div>
+
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <div className="relative">
+              <input type="checkbox" className="sr-only" checked={useProfile} onChange={() => setUseProfile(!useProfile)} />
+              <div className={`block w-8 h-4.5 rounded-full transition-colors duration-300 ease-in-out ${useProfile ? 'bg-zinc-900' : 'bg-zinc-200'}`}></div>
+              <div className={`absolute left-0.5 top-0.5 bg-white w-3.5 h-3.5 rounded-full transform transition-transform duration-300 ease-in-out ${useProfile ? 'translate-x-3.5' : 'translate-x-0'}`}></div>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-600 group-hover:text-zinc-900 transition-colors">
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Use Memory</span>
+            </div>
+          </label>
+
+        </div>
+      </div>
+
       {/* Intro section */}
       {messages.length === 0 && (
-        <div className="flex flex-col gap-2 items-center justify-center pt-12 pb-8 text-center opacity-80">
-          <Cpu className="w-10 h-10 text-zinc-500 mb-2" />
-          <h2 className="font-headline-md text-2xl text-white tracking-tight">Active Session</h2>
-          <p className="font-body-sm text-[13px] text-zinc-500">Intelligence core online. Ready to secure new memories.</p>
+        <div className="flex flex-col gap-3 items-center justify-center pt-24 pb-8 text-center">
+          <h2 className="font-headline-md text-3xl font-medium text-zinc-800 tracking-tight">What do you want to know?</h2>
         </div>
       )}
 
       {/* Message List */}
-      <div className="flex flex-col gap-2 w-full pb-8">
+      <div className="flex flex-col gap-2 w-full pb-36 pt-4">
         {messages.map((msg, idx) => renderMessageWithEvents(msg, idx))}
         
         {isLoading && (
-          <div className="flex gap-3 max-w-[90%] sm:max-w-[80%] mt-4 opacity-50">
+          <div className="flex gap-4 mt-4 opacity-50">
             <div className="flex-shrink-0 mt-1">
-              <div className="w-6 h-6 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-bold text-white animate-pulse">
-                MV
+              <div className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center bg-white text-zinc-800 animate-pulse">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
               </div>
             </div>
-            <div className="pt-2 flex gap-1">
-              <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce" />
-              <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
-              <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce" style={{animationDelay: '0.4s'}} />
+            <div className="pt-3 flex gap-1.5">
+              <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" />
+              <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+              <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}} />
             </div>
           </div>
         )}
         <div ref={endRef} />
       </div>
 
-      {/* Floating Input Area */}
-      <div className="fixed bottom-0 left-0 md:left-64 right-0 p-4 md:p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-40">
-        <div className="max-w-4xl mx-auto relative group">
-          <div className="absolute -inset-0.5 bg-gradient-to-r from-zinc-800 to-zinc-700 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-          
-          <form onSubmit={handleSubmit} className="relative flex items-end bg-[#09090b] border border-zinc-800 rounded-xl overflow-hidden focus-within:border-white focus-within:ring-1 focus-within:ring-white/20 transition-all">
-            <button type="button" className="p-3.5 text-zinc-500 hover:text-white transition-colors">
-              <PlusCircle className="w-5 h-5" />
-            </button>
+      {/* Floating Input Area (Perplexity Style) */}
+      <div className="fixed bottom-6 left-0 md:left-64 right-0 px-4 md:px-8 z-40 flex justify-center pointer-events-none">
+        <div className="w-full max-w-3xl pointer-events-auto">
+          <form onSubmit={handleSubmit} className="relative flex flex-col bg-white border border-zinc-200 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-zinc-300 focus-within:shadow-[0_12px_40px_rgb(0,0,0,0.12)] transition-all duration-200">
             
             <textarea 
               value={inputValue}
@@ -131,23 +158,29 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
                   handleSubmit(e)
                 }
               }}
-              className="w-full bg-transparent border-0 py-3.5 px-2 text-sm text-white placeholder-zinc-600 focus:ring-0 resize-none max-h-32 no-scrollbar" 
-              placeholder="Communicate with MemoryVault..." 
+              className="w-full bg-transparent border-0 pt-4 pb-2 px-4 text-base text-zinc-900 placeholder-zinc-400 focus:ring-0 resize-none max-h-40 no-scrollbar" 
+              placeholder="Ask anything..." 
               rows={1}
             />
             
-            <button type="button" className="p-3.5 text-zinc-500 hover:text-[var(--color-primary-container)] transition-colors">
-              <Mic className="w-5 h-5" />
-            </button>
-            
-            <button type="submit" disabled={!inputValue.trim() || isLoading} className="p-3.5 mr-1 text-[var(--color-primary-container)] hover:text-orange-400 transition-colors disabled:opacity-50">
-              <Send className="w-5 h-5" />
-            </button>
+            <div className="flex items-center justify-between px-3 pb-3 pt-1">
+              <div className="flex items-center gap-2">
+                <button type="button" className="p-2 text-zinc-400 hover:text-zinc-700 bg-zinc-50 hover:bg-zinc-100 rounded-full transition-colors flex items-center gap-1.5">
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button type="button" className="p-2 text-zinc-400 hover:text-zinc-700 transition-colors">
+                  <Mic className="w-4 h-4" />
+                </button>
+                <button type="submit" disabled={!inputValue.trim() || isLoading} className="w-8 h-8 flex items-center justify-center bg-zinc-900 text-white hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-50 disabled:bg-zinc-200 disabled:text-zinc-400">
+                  <ArrowUp className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
           </form>
-          
-          <div className="text-center mt-2">
-            <span className="font-code text-[10px] text-zinc-600 tracking-wide">End-to-end encrypted • Quantum resistant storage</span>
-          </div>
         </div>
       </div>
     </div>

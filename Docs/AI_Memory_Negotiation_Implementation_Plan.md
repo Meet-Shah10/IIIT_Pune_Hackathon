@@ -107,25 +107,34 @@ MemoryEvent {
 
 ## 5. Feature Implementation Detail, PoC, and Justification
 
-### 5.1 Active Context Header (The Global Toggles) (P0 — the core of the whole project)
+### 5.1 App Shell & Navigation Architecture (UX Case Study)
 
-**Justification:** Replaces the intrusive popup with a persistent, empowering control interface. By keeping it pinned at the top of the chat, the user has continuous, legible agency over the AI's data flow.
+**Design Rationale:** We adopted a "Minimal Gallery" (Perplexity-inspired) layout to resolve the core HCI tension: users need deep control over memory without feeling trapped in a settings menu. 
 
-**UI Implementation:**
+**Spatial Relationship:**
+- **The Archive (Left Sidebar):** A muted, `bg-zinc-50` secondary zone. It anchors the user with a prominent "New Session" button, quick access to Artifacts, and past Sessions. It intentionally recedes visually to let the main canvas shine.
+- **The Stage (Main Canvas):** A full-bleed, `bg-white` primary interaction zone. It uses massive whitespace and hides scrollbars to create a distraction-free area where the conversation—and the AI's transparent memory extraction—takes center stage.
 
-Pinned at the top of the chat window or resting right above the input bar:
-- Toggle 1: `[✓] Extract & Store New Memories`
-- Toggle 2: `[✓] Use My Saved Profile to Answer`
+### 5.2 Interaction Mechanisms: Active Context Header & Floating Input (P0 — Core)
 
-**Backend Logic:**
-- If Toggle 1 is **OFF**: The backend bypasses the JSON memory-extraction LLM call entirely. Nothing is written to the DB.
-- If Toggle 2 is **OFF**: The backend does not query the Memories collection. The LLM receives a standard system prompt with no personalization.
+**UX Rationale (The HCI Solution):** 
+Traditional AI memory systems either bury toggles deep in a settings menu (opaque) or interrupt every message with an intrusive "Save this?" popup (friction). We resolved this by introducing two persistent but non-distracting UI elements:
 
-**PoC to demonstrate to mentors:**
-1. Turn OFF "Use Saved Profile". Ask "What is my favorite language?". AI responds generically.
-2. Turn ON "Extract & Store". Type "My favorite language is Python."
-3. Open the sidebar dashboard to show it was instantly captured and logged in the timeline.
-4. Turn ON "Use Saved Profile". Ask "What should I code in today?" AI responds with a Python suggestion.
+1. **The Active Context Header (Pinned Toggles):**
+   - **Justification:** Pinned directly above the conversation, this header acts as a real-time dashboard of the AI's state. It gives users continuous, legible agency over data flow ("Extract & Store Memories" and "Use Saved Profile") without breaking conversational flow.
+   - **Micro-interactions:** Toggles use smooth, immediate state changes, conveying absolute responsiveness and trust.
+
+2. **The Floating Input Bar:**
+   - **Justification:** Anchored at the bottom of the screen, the input bar uses a pill-shaped, elevated container (subtle drop shadow `shadow-sm`) to cleanly float above the scrolling history. This design, inspired by search-centric interfaces like Perplexity, centralizes all input actions (text, voice, file attachments) into a single, cohesive command center.
+
+**Backend Logic Alignment:**
+- If **Extract & Store** is OFF: The backend bypasses the JSON memory-extraction LLM call entirely. Nothing is written to the DB.
+- If **Use Profile** is OFF: The backend does not query the Memories collection. The LLM receives a standard blank-slate system prompt.
+
+**User Journey (Demo Flow):**
+1. User turns OFF "Use Profile" and asks a personal question. AI responds generically.
+2. User turns ON "Extract & Store", types a personal fact. The UI visually indicates extraction inline.
+3. User turns ON "Use Profile", asks the question again. AI responds utilizing the newly saved context.
 
 ### 5.2 Conversational Renegotiation ("forget that")
 
@@ -140,14 +149,16 @@ Return JSON: { "intent": string, "targetMemoryId": string|null }
 ```
 - If `FORGET_MEMORY`, short-circuit the normal chat flow, delete/archive the targeted memory, and reply: *"I've removed that from my memory."*
 
-### 5.3 Memory Dashboard (P0)
+### 5.3 Memory Dashboard & Timeline (The Audit Trail) (P0)
 
-**Justification:** The toggles handle future extraction and utilization, but the dashboard handles past transparency. Directly answers the PS's stated problem: *"most users have no meaningful way to see what an AI remembers about them."*
+**Justification (Solving the Black Box Problem):** 
+The core HCI failure of modern AI is the "black box" effect—users don't know what the AI remembers, when it learned it, or how to undo it. 
+We solved this by merging the Dashboard and Timeline into a unified, Light Mode "Memory Vault" accessible from the Sidebar.
 
-**Required capabilities (all three, not just a read-only list):**
-1. List all active memories grouped by category.
-2. One-click "Forget this" per memory (writes a `forgotten` MemoryEvent — keeps the audit trail, never hard-deletes).
-3. Filter/search bar for navigating stored facts.
+**Required Capabilities Implemented:**
+1. **Active Context Cards:** Current facts are displayed as elevated cards, color-coded strictly by privacy sensitivity (e.g., Critical = Red, Medium = Amber).
+2. **Frictionless Revocation:** Every memory card features an explicit, accessible "Forget This" button that immediately strikes the memory from active context (and logs a revocation event), restoring complete user agency.
+3. **The Git-Style Timeline:** We introduced a vertical, chronological audit trail on the right-hand column. Every time the AI silently extracts a memory (via the Active Context Header) or a user revokes one, a "commit" is logged here. This proves to the user that extraction is a tracked, auditable process, completely eliminating the opaque black box.
 
 ### 5.4 Memory Expiration (P1)
 
@@ -166,11 +177,9 @@ async function expireStaleMemories(userId) {
 }
 ```
 
-### 5.5 Memory Timeline (P1)
+### 5.5 Memory Timeline (Integrated into Dashboard)
 
-**Justification:** Answers the need for a "visible, ongoing part of the interaction." Because extraction is now silent (controlled by Toggle 1), the Timeline is the user's audit log to verify the AI isn't over-reaching.
-
-**PoC:** The four-step Toggle PoC above should visibly populate timeline rows (`extracted` → `forgotten`) with no extra work — it's a read view over data you're already writing.
+**Justification:** Integrated directly into the Dashboard view as the primary mechanism for auditability. It visually populates with `extracted` and `forgotten` events, providing ongoing transparency.
 
 ### 5.6 Sensitivity Meter (P2)
 

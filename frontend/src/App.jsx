@@ -4,7 +4,8 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { Layout } from './components/layout/Layout'
 import LoginPage from './pages/LoginPage'
 import ChatPage from './pages/ChatPage'
-import DashboardPage from './pages/DashboardPage'
+import DashboardOverview from './pages/DashboardOverview'
+import MemoryTimeline from './pages/MemoryTimeline'
 
 const queryClient = new QueryClient()
 
@@ -31,7 +32,8 @@ function App() {
               </ProtectedRoute>
             }>
               <Route index element={<ChatPage />} />
-              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="dashboard" element={<DashboardOverview />} />
+              <Route path="timeline" element={<MemoryTimeline />} />
             </Route>
             
           </Routes>

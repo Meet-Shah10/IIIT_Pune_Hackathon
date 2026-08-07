@@ -1,82 +1,113 @@
 import { NavLink } from 'react-router-dom'
-import { Archive, Clock, Shield, BrainCircuit, Box, HelpCircle, LogOut } from 'lucide-react'
+import { Plus, Monitor, LayoutDashboard, GitCommit, Settings, ChevronDown, Bell, PanelLeftClose, ArrowUpCircle } from 'lucide-react'
 
 export function Sidebar() {
   return (
-    <nav className="fixed left-0 top-0 h-full w-64 bg-[var(--color-surface-container-lowest)] border-r border-[var(--color-border-subtle)] flex-col py-6 z-40 hidden md:flex transition-all duration-200 ease-in-out">
-      <div className="px-6 mb-8 flex items-center gap-3">
-        {/* Placeholder logo similar to Stitch UI */}
-        <div className="w-8 h-8 rounded bg-white flex items-center justify-center font-bold text-black font-code">
-          MC
+    <nav className="fixed left-0 top-0 h-full w-64 bg-[#f9f9f9] border-r border-zinc-200 flex-col z-40 hidden md:flex transition-all duration-200 ease-in-out">
+      
+      {/* Top Header */}
+      <div className="px-4 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {/* Minimalist Logo Icon */}
+          <div className="w-6 h-6 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-zinc-800">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
         </div>
-        <div>
-          <h1 className="font-headline-md font-bold text-[var(--color-primary-container)] tracking-tighter text-xl">MemoryVault</h1>
-          <p className="font-label-caps text-[var(--color-text-muted)] mt-1 text-[10px] tracking-widest">PRECISION INTEGRITY</p>
-        </div>
+        <button className="text-zinc-500 hover:text-zinc-800 transition-colors">
+          <PanelLeftClose className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* New Session Button */}
+      <div className="px-4 mt-2">
+        <button className="flex items-center gap-2 px-3 py-2 w-full rounded-md hover:bg-zinc-200/50 text-zinc-700 font-medium text-sm transition-colors">
+          <Plus className="w-4 h-4" />
+          <span>New</span>
+        </button>
       </div>
       
-      <div className="flex-1 px-4 space-y-2">
-        <NavLink 
-          to="/dashboard"
-          className={({ isActive }) => 
-            `flex items-center space-x-3 px-4 py-3 rounded transition-all duration-200 ease-in-out font-label-caps uppercase text-xs ${
-              isActive 
-                ? 'bg-white/5 text-[var(--color-primary-container)] border-r-2 border-[var(--color-primary-container)]' 
-                : 'text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-on-surface)]'
-            }`
-          }
-        >
-          <Box className="w-5 h-5" />
-          <span>Vault</span>
-        </NavLink>
-        
+      {/* Primary Links */}
+      <div className="px-4 mt-4 space-y-0.5">
         <NavLink 
           to="/"
           className={({ isActive }) => 
-            `flex items-center space-x-3 px-4 py-3 rounded transition-all duration-200 ease-in-out font-label-caps uppercase text-xs ${
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
               isActive 
-                ? 'bg-white/5 text-[var(--color-primary-container)] border-r-2 border-[var(--color-primary-container)]' 
-                : 'text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-on-surface)]'
+                ? 'bg-zinc-200/50 text-zinc-900' 
+                : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
             }`
           }
         >
-          <Clock className="w-5 h-5" />
+          <Monitor className="w-4 h-4" />
           <span>Chat</span>
         </NavLink>
-
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-on-surface)] transition-all duration-200 ease-in-out font-label-caps uppercase text-xs">
-          <BrainCircuit className="w-5 h-5" />
-          <span>Intelligence</span>
-        </button>
         
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-on-surface)] transition-all duration-200 ease-in-out font-label-caps uppercase text-xs">
-          <Archive className="w-5 h-5" />
-          <span>Archive</span>
-        </button>
+        <NavLink 
+          to="/timeline"
+          className={({ isActive }) => 
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
+              isActive 
+                ? 'bg-zinc-200/50 text-zinc-900' 
+                : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
+            }`
+          }
+        >
+          <GitCommit className="w-4 h-4" />
+          <span>Timeline</span>
+        </NavLink>
 
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded text-[var(--color-text-muted)] hover:bg-white/5 hover:text-[var(--color-on-surface)] transition-all duration-200 ease-in-out font-label-caps uppercase text-xs">
-          <Shield className="w-5 h-5" />
-          <span>Security</span>
+        <NavLink 
+          to="/dashboard"
+          className={({ isActive }) => 
+            `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${
+              isActive 
+                ? 'bg-zinc-200/50 text-zinc-900' 
+                : 'text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900'
+            }`
+          }
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span>Dashboard</span>
+        </NavLink>
+
+        <button className="w-full flex items-center space-x-3 px-3 py-2 rounded-md text-zinc-600 hover:bg-zinc-200/30 hover:text-zinc-900 transition-all duration-200 text-sm font-medium">
+          <Settings className="w-4 h-4" />
+          <span>Customize</span>
         </button>
       </div>
 
-      <div className="px-4 mt-auto space-y-4">
-        <button className="w-full bg-[var(--color-primary-container)] text-black font-label-caps py-3 px-4 rounded hover:opacity-90 transition-opacity flex justify-center items-center gap-2">
-          <span className="text-xl leading-none">+</span>
-          <span>NEW MEMORY</span>
-        </button>
-        
-        <div className="space-y-2 pt-4 border-t border-[var(--color-border-subtle)]">
-          <button className="w-full flex items-center space-x-3 px-4 py-2 text-[var(--color-text-muted)] hover:text-[var(--color-on-surface)] transition-colors font-label-caps uppercase text-[10px]">
-            <HelpCircle className="w-4 h-4" />
-            <span>Support</span>
-          </button>
-          <button className="w-full flex items-center space-x-3 px-4 py-2 text-[var(--color-text-muted)] hover:text-[var(--color-on-surface)] transition-colors font-label-caps uppercase text-[10px]">
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+
+
+      {/* Sessions Section */}
+      <div className="px-4 mt-8 flex-1 overflow-y-auto no-scrollbar">
+        <div className="flex items-center justify-between text-xs font-semibold text-zinc-500 px-3 mb-2">
+          <span>Sessions</span>
+          <ChevronDown className="w-3.5 h-3.5" />
+        </div>
+        <div className="space-y-0.5">
+          <button className="w-full text-left px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-200/50 rounded-md transition-colors truncate">
+            hello
           </button>
         </div>
       </div>
+
+      {/* Bottom Profile */}
+      <div className="mt-auto">
+        <div className="px-4 py-3 border-t border-zinc-200 flex items-center justify-between hover:bg-zinc-200/30 cursor-pointer transition-colors">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-zinc-300 flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-zinc-600">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+            <span className="text-xs font-medium text-zinc-700 truncate max-w-[120px]">harshlal0155935</span>
+          </div>
+          <Bell className="w-3.5 h-3.5 text-zinc-500" />
+        </div>
+      </div>
+
     </nav>
   )
 }

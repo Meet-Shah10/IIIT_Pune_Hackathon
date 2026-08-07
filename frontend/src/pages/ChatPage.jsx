@@ -72,29 +72,26 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full w-full relative">
-      {/* TopAppBar (Mobile & Global Actions) */}
-      <header className="fixed top-0 w-full md:w-[calc(100%-16rem)] z-50 bg-[var(--color-glass-surface)] backdrop-blur-md border-b border-[var(--color-border-subtle)] flex justify-between items-center px-4 md:px-8 h-16">
-        <div className="md:hidden flex items-center gap-2">
-          <Menu className="w-5 h-5 text-[var(--color-text-muted)]" />
-          <h1 className="font-headline-md font-bold text-[var(--color-on-surface)] tracking-tighter">MemoryVault</h1>
-        </div>
-        
-        {/* Spacer for desktop */}
-        <div className="hidden md:block w-1/3"></div>
-
-        {/* Search Bar */}
-        <div className="flex-1 max-w-md mx-4 relative hidden sm:block">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
-          <input 
-            type="text"
-            className="w-full bg-[#09090b] border border-zinc-800 rounded py-1.5 pl-9 pr-3 text-sm text-[var(--color-on-surface)] placeholder-zinc-600 focus:outline-none focus:border-white focus:ring-1 focus:ring-white/20 transition-all shadow-[inset_0_0_10px_rgba(255,255,255,0.02)]"
-            placeholder="Search memories..."
-          />
+      {/* Top Bar (Perplexity style) */}
+      <header className="absolute top-0 w-full z-50 bg-transparent flex justify-between items-center px-4 md:px-8 py-4 pointer-events-none">
+        <div className="flex items-center pointer-events-auto">
+          
+          <div className="md:hidden flex items-center gap-2">
+            <Menu className="w-5 h-5 text-zinc-700" />
+            <h1 className="font-headline-md font-bold text-zinc-900 tracking-tighter">MemoryVault</h1>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Bell className="w-5 h-5 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] cursor-pointer" />
-          <Settings className="w-5 h-5 text-[var(--color-on-surface-variant)] hover:text-[var(--color-primary)] cursor-pointer" />
+        <div className="flex items-center gap-3">
+          <button className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+          </button>
+          <button className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors">
+            <Menu className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
