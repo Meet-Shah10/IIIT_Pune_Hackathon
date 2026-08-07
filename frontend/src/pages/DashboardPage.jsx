@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Edit2, Trash2 } from 'lucide-react'
 import MemoryRelationshipMap from '../components/dashboard/MemoryRelationshipMap'
+import { api } from '../lib/api'
 
 // Dummy Data
 const initialMemories = [
@@ -79,8 +80,35 @@ const auditEvents = [
 export default function DashboardPage() {
   const [memories, setMemories] = useState(initialMemories)
 
-  const handleForget = (id) => {
-    setMemories(memories.filter(m => m.id !== id))
+  useEffect(() => {
+    const loadMemories = async () => {
+      try {
+        const data = await api.getMemories()
+        if (Array.isArray(data)) {
+          setMemories(data.map((memory) => ({
+            id: memory._id,
+            content: memory.content,
+            category: memory.category,
+            sensitivity: memory.sensitivity,
+            status: memory.status,
+            createdAt: memory.createdAt,
+          })))
+        }
+      } catch (error) {
+        console.error('Failed to load memories:', error)
+      }
+    }
+
+    loadMemories()
+  }, [])
+
+  const handleForget = async (id) => {
+    try {
+      await api.forgetMemory(id)
+      setMemories((prev) => prev.filter((memory) => memory.id !== id))
+    } catch (error) {
+      console.error('Failed to delete memory:', error)
+    }
   }
 
   const getSensitivityClasses = (sensitivity) => {
