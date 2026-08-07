@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Brain, Trash2, X, Filter, Activity, Sliders, Clock, User, BookOpen, FileText } from 'lucide-react'
+import { Brain, Trash2, X, Activity, Sliders, Clock, User, BookOpen, FileText } from 'lucide-react'
 
 // The 6 Canonical Backend Categories
 const CANONICAL_CATEGORIES = [
@@ -136,6 +136,10 @@ export default function MemoryRelationshipMap({ memories = [], onForgetMemory })
     }
   }
 
+  const handleCenterNodeClick = () => {
+    setSelectedCategory(null)
+  }
+
   return (
     <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm mb-10">
       {/* Header */}
@@ -196,7 +200,19 @@ export default function MemoryRelationshipMap({ memories = [], onForgetMemory })
               })}
 
               {/* Central User Node */}
-              <g className="cursor-default">
+              <g
+                className="cursor-pointer"
+                onClick={handleCenterNodeClick}
+                role="button"
+                tabIndex={0}
+                aria-label="Show all memories"
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    handleCenterNodeClick()
+                  }
+                }}
+              >
                 <circle
                   cx={centerX}
                   cy={centerY}
@@ -205,21 +221,12 @@ export default function MemoryRelationshipMap({ memories = [], onForgetMemory })
                 />
                 <text
                   x={centerX}
-                  y={centerY - 3}
+                  y={centerY + 4}
                   textAnchor="middle"
                   fill="white"
                   className="text-[10px] font-extrabold tracking-widest uppercase"
                 >
-                  YOU
-                </text>
-                <text
-                  x={centerX}
-                  y={centerY + 9}
-                  textAnchor="middle"
-                  fill="#818cf8"
-                  className="text-[8px] font-mono font-bold tracking-wider"
-                >
-                  HUB
+                  YOUR
                 </text>
               </g>
 
@@ -284,48 +291,7 @@ export default function MemoryRelationshipMap({ memories = [], onForgetMemory })
         {/* Category Filter Chips & Memory Drawer (7 cols) */}
         <div className="lg:col-span-7 flex flex-col h-full justify-between">
           
-          {/* Filter Bar */}
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2.5 text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-              <Filter className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Backend Category Filter</span>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  selectedCategory === null
-                    ? 'bg-zinc-900 text-white border-zinc-900 shadow-xs'
-                    : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-100'
-                }`}
-              >
-                All ({memories.length})
-              </button>
 
-              {nodePositions.map((node) => {
-                const isSelected = selectedCategory === node.category
-                const { Icon, label } = node.style
-                return (
-                  <button
-                    key={`chip-${node.category}`}
-                    onClick={() => handleCategorySelect(node.category)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-colors ${
-                      isSelected
-                        ? `${node.style.bg} font-semibold border-current shadow-xs ring-2 ring-indigo-500/20`
-                        : 'bg-white text-zinc-600 border-zinc-200 hover:bg-zinc-100'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{label}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/80 text-zinc-800 font-bold border border-zinc-200">
-                      {node.count}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
 
           {/* Associated Memories List Container */}
           <div className="bg-white border border-zinc-200 rounded-xl p-4 shadow-xs min-h-[260px] flex flex-col">

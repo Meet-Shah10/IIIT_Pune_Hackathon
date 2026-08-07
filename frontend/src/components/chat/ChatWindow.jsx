@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Plus, Mic, ArrowUp, Cpu, Copy, Edit3, Trash2, RefreshCw, Database, UserCheck, X } from 'lucide-react'
+import { useSidebar } from '../../context/SidebarContext'
 
 import LanguageSelector from '../ui/LanguageSelector'
 
@@ -37,6 +38,7 @@ function MiniMascot() {
 }
 
 export default function ChatWindow({ messages, events, isLoading, onSendMessage }) {
+  const { isOpen: sidebarOpen } = useSidebar()
   const [inputValue, setInputValue] = useState('')
   const [storeMemories, setStoreMemories] = useState(true)
   const [useProfile, setUseProfile] = useState(true)
@@ -198,7 +200,10 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
       </div>
 
       {/* Floating Input Area (Perplexity Style) */}
-      <div className="fixed bottom-6 left-0 md:left-64 right-0 px-4 md:px-8 z-40 flex justify-center pointer-events-none">
+      <div
+        className="fixed bottom-6 right-0 px-4 md:px-8 z-40 flex justify-center pointer-events-none transition-all duration-300 ease-in-out"
+        style={{ left: typeof window !== 'undefined' && window.innerWidth >= 768 ? (sidebarOpen ? '16rem' : '3rem') : '0' }}
+      >
         <div className="w-full max-w-3xl pointer-events-auto">
 
           <form onSubmit={handleSubmit} className="relative flex flex-col w-full bg-white border border-zinc-200 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-zinc-300 focus-within:shadow-[0_12px_40px_rgb(0,0,0,0.12)] transition-all duration-200">
