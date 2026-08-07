@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api';
 import { getUserId, getSessionId } from '../utils/userSession';
 import ChatWindow from '../components/chat/ChatWindow'
+import LanguageSelector from '../components/ui/LanguageSelector'
 import { Menu, Search, Bell, Settings } from 'lucide-react'
 
 export default function ChatPage() {
@@ -87,7 +88,8 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <LanguageSelector />
           <button className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
