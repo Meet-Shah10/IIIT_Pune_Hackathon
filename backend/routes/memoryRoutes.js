@@ -7,10 +7,7 @@ const { buildTimelineEvent } = require('../services/timelineService');
 
 router.get('/events', async (req, res) => {
   try {
-    const userId = req.headers['x-user-id'] || req.query.userId || req.params.userId;
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
-    }
+    const userId = req.user._id.toString();
 
     const events = await MemoryEvent.find({ userId }).sort({ createdAt: -1 }).limit(100);
     const memoryIds = events
@@ -33,8 +30,8 @@ router.get('/events', async (req, res) => {
 });
 
 // Get all memories for a user (optional filter by status)
-router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
+router.get('/', async (req, res) => {
+  const userId = req.user._id.toString();
   const { status } = req.query; // e.g., ?status=active
   try {
     const filter = { userId };
@@ -55,9 +52,10 @@ router.get('/:userId', async (req, res) => {
 // Delete a memory (soft-archive)
 router.delete('/:memoryId', async (req, res) => {
   const { memoryId } = req.params;
+  const userId = req.user._id.toString();
   try {
-    const mem = await Memory.findById(memoryId);
-    if (!mem) return res.status(404).json({ error: 'Memory not found' });
+    const mem = await Memory.findOne({ _id: memoryId, userId });
+    if (!mem) return res.status(404).json({ error: 'Memory not found or unauthorized' });
 
     mem.status = 'archived';
     await mem.save();
@@ -84,10 +82,11 @@ router.delete('/:memoryId', async (req, res) => {
 // Update memory (e.g. change expiresAt, autoDelete, or content)
 router.patch('/:memoryId', async (req, res) => {
   const { memoryId } = req.params;
+  const userId = req.user._id.toString();
   const { expiresAt, expiresInMonths, expiresInDays, autoDelete, content } = req.body;
   try {
-    const mem = await Memory.findById(memoryId);
-    if (!mem) return res.status(404).json({ error: 'Memory not found' });
+    const mem = await Memory.findOne({ _id: memoryId, userId });
+    if (!mem) return res.status(404).json({ error: 'Memory not found or unauthorized' });
 
     let eventDetail = '';
     let eventAction = 'updated';

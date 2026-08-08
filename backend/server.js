@@ -13,7 +13,8 @@ const ChatSession = require('./models/ChatSession');
 const memoryRoutes = require('./routes/memoryRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
-const userIdMiddleware = require('./middleware/userId');
+const authRoutes = require('./routes/authRoutes');
+const authMiddleware = require('./middleware/authMiddleware');
 const { startMemoryCleanupCron } = require('./services/memoryCleanup');
 
 const app = express();
@@ -22,7 +23,6 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(userIdMiddleware);
 
 // DB connection
 connectDB();
@@ -34,13 +34,8 @@ function buildChatSessionId() {
 // -------------------------------------------------------------------
 // Session creation endpoint for the new-chat flow
 // -------------------------------------------------------------------
-app.post('/api/chat/sessions', async (req, res) => {
-  const { userId } = req.body;
-  const resolvedUserId = userId || req.headers['x-user-id'];
-
-  if (!resolvedUserId) {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
+app.post('/api/chat/sessions', authMiddleware, async (req, res) => {
+  const resolvedUserId = req.user._id.toString();
 
   const sessionId = buildChatSessionId();
   try {
@@ -56,9 +51,9 @@ app.post('/api/chat/sessions', async (req, res) => {
   }
 });
 
-// GET /api/chat/sessions/:userId
-app.get('/api/chat/sessions/:userId', async (req, res) => {
-  const { userId } = req.params;
+// GET /api/chat/sessions (gets sessions for the logged in user)
+app.get('/api/chat/sessions', authMiddleware, async (req, res) => {
+  const userId = req.user._id.toString();
   try {
     const sessions = await ChatSession.find({ userId }).sort({ createdAt: -1 });
     return res.json(sessions);
@@ -69,11 +64,15 @@ app.get('/api/chat/sessions/:userId', async (req, res) => {
 });
 
 // DELETE /api/chat/sessions/:sessionId
-app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
+app.delete('/api/chat/sessions/:sessionId', authMiddleware, async (req, res) => {
   const { sessionId } = req.params;
+  const userId = req.user._id.toString();
   try {
-    // 1. Delete the chat session record
-    await ChatSession.deleteOne({ sessionId });
+    // 1. Delete the chat session record, ensuring it belongs to the user
+    const deletedSession = await ChatSession.findOneAndDelete({ sessionId, userId });
+    if (!deletedSession) {
+      return res.status(404).json({ error: 'Session not found or not authorized' });
+    }
 
     // 2. Delete all messages associated with the session
     await Message.deleteMany({ sessionId });
@@ -97,11 +96,12 @@ app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
 // -------------------------------------------------------------------
 // Primary chat endpoint – now respects memory & session history
 // -------------------------------------------------------------------
-app.post('/api/chat', async (req, res) => {
-  const { userId, sessionId, message, memoryEnabled, useContext, language } = req.body;
+app.post('/api/chat', authMiddleware, async (req, res) => {
+  const { sessionId, message, memoryEnabled, useContext, language } = req.body;
+  const userId = req.user._id.toString();
   console.log('Payload received:', req.body);
 
-  if (!userId || !sessionId || !message) {
+  if (!sessionId || !message) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -124,13 +124,12 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const promptParts = [];
-    promptParts.push(`You are a helpful AI assistant.
+    promptParts.push(`You are a precise AI assistant. You have access to user-specific facts in <user_facts> and conversation history in <chat_history>.
 
-<truth_hierarchy>
-1. Current User Input (highest priority)
-2. Conversation History
-3. Long-Term Memory Facts (lowest priority - if a long-term memory contradicts recent conversation history, prioritize the recent conversation)
-</truth_hierarchy>
+STRICT ATTENTION RULES:
+1. Grounding: You must NEVER state facts about the user that are not explicitly present in <user_facts> or <chat_history>.
+2. Resolution of Conflicts: Information in <chat_history> represents current state. If <chat_history> contradicts <user_facts>, treat the fact in <user_facts> as revoked and rely exclusively on <chat_history>.
+3. Absence of Information: If the answer cannot be derived from <user_facts>, <chat_history>, or current input, state that you do not know or ask for clarification rather than assuming.
 
 <long_term_memories>
 ${injectedRelevantMemories}
@@ -151,12 +150,17 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
     const replyContent = extracted?.reply || extracted?.message || extracted?.response || 'I am processing your request.';
 
     // 4️⃣ Save User's new message and AI's response back to MongoDB
+    const responseConfidenceScore = typeof extracted?.confidence_score === 'number'
+      ? Math.min(100, Math.max(0, Math.round(extracted.confidence_score)))
+      : 90;
+
     await Message.create({
       sessionId,
       role: 'user',
       content: message,
       createdAt: new Date(),
       wasFactExtracted: Boolean(extracted?.negotiation_prompt),
+      confidenceScore: responseConfidenceScore,
     });
 
     // Update Session Title to a generated summary if it's currently default
@@ -177,12 +181,17 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
       content: replyContent,
       createdAt: new Date(),
       wasFactExtracted: false,
+      confidenceScore: responseConfidenceScore,
     });
 
     // 5️⃣ If memory enabled and a negotiation_prompt exists, classify & store
     let memorySaved = false;
     if (memoryEnabled && extracted?.negotiation_prompt) {
-      const { content, category, reason } = extracted.negotiation_prompt;
+      const { content, category, reason, confidence_score } = extracted.negotiation_prompt;
+      const confidenceScore = typeof confidence_score === 'number' 
+        ? Math.min(100, Math.max(0, Math.round(confidence_score))) 
+        : 90;
+
       const classification = await classifySensitivity(content, category);
       const memoryReason = reason || classification.reasoning || 'User shared a durable personal detail';
 
@@ -209,6 +218,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
         expiresAt,
         autoDelete: true,
         sessionId,
+        confidenceScore,
       });
 
       await MemoryEvent.create({
@@ -220,6 +230,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
         memoryContent: content,
         memoryCategory: category || 'general',
         memorySensitivity: classification.sensitivity,
+        confidenceScore,
         savedAt: newMemory.createdAt,
       });
 
@@ -228,6 +239,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
         sensitivity: classification.sensitivity,
         source: classification.source || 'chat',
         reasoning: memoryReason,
+        confidenceScore,
       };
       memorySaved = true;
     }
@@ -235,6 +247,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
     // 6️⃣ Respond
     return res.json({
       reply: replyContent,
+      confidence_score: responseConfidenceScore,
       negotiation_prompt: extracted?.negotiation_prompt || null,
       memorySaved,
     });
@@ -245,7 +258,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
 });
 
 // GET endpoint to retrieve session chat history
-app.get('/api/chat/history/:sessionId', async (req, res) => {
+app.get('/api/chat/history/:sessionId', authMiddleware, async (req, res) => {
   const { sessionId } = req.params;
   try {
     const history = await Message.find({ sessionId }).sort({ createdAt: 1 });
@@ -256,12 +269,33 @@ app.get('/api/chat/history/:sessionId', async (req, res) => {
   }
 });
 
+// GET endpoint to retrieve confidence score series for a session
+app.get('/api/chat/confidence/:sessionId', authMiddleware, async (req, res) => {
+  const { sessionId } = req.params;
+  try {
+    const messages = await Message.find({ sessionId }).sort({ createdAt: 1 }).select('role content confidenceScore createdAt');
+    const series = messages
+      .filter(m => m.role === 'assistant')
+      .map((m, idx) => ({
+        index: idx + 1,
+        confidenceScore: typeof m.confidenceScore === 'number' ? m.confidenceScore : 90,
+        preview: m.content?.slice(0, 60) || '',
+        createdAt: m.createdAt,
+      }));
+    return res.json(series);
+  } catch (err) {
+    console.error('Fetch confidence error:', err);
+    return res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
 // -------------------------------------------------------------------
 // Memory CRUD endpoints (future dashboard)
 // -------------------------------------------------------------------
-app.use('/api/memories', memoryRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/memories', authMiddleware, memoryRoutes);
+app.use('/api/dashboard', authMiddleware, dashboardRoutes);
+app.use('/api/settings', authMiddleware, settingsRoutes);
 
 // Start cron jobs
 startMemoryCleanupCron();

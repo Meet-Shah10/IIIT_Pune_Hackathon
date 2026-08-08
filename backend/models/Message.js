@@ -7,6 +7,7 @@ const MessageSchema = new mongoose.Schema({
   content: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   wasFactExtracted: { type: Boolean, default: false },
+  confidenceScore: { type: Number, default: 90 },
   expiresAt: { type: Date, default: null },
 }, { timestamps: true });
 

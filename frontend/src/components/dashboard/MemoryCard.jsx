@@ -29,6 +29,10 @@ export function MemoryCard({ memory, onForget }) {
           <div className="flex flex-wrap items-center gap-2 mt-auto">
             <SensitivityBadge sensitivity={memory.sensitivity} />
             
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-md uppercase tracking-wider">
+              <span>{Math.min(100, Math.max(0, Math.round(memory.confidenceScore || 90)))}% CERTAINTY</span>
+            </div>
+
             <div className="flex items-center gap-1 text-meta text-[var(--text-muted)] bg-[var(--surface-raised)] border border-[var(--border)] px-2 py-0.5 rounded-md">
               <Clock className="w-3 h-3" />
               {isPermanent ? 'PERMANENT' : `EXPIRES ${new Date(memory.expiresAt).toLocaleDateString()}`}

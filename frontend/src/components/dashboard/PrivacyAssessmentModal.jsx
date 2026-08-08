@@ -86,7 +86,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
           <div>
             <h3 className="text-xs font-semibold text-zinc-400 tracking-widest uppercase mb-3">Data Nutrition Label</h3>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {/* Box 1 */}
               <div className={`${theme.bg} ${theme.border} border rounded-xl p-4 flex flex-col justify-between`}>
                 <div className={`flex items-center gap-1.5 text-[10px] font-semibold uppercase ${theme.text} mb-2 tracking-wide`}>
@@ -96,6 +96,22 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
               </div>
 
               {/* Box 2 */}
+              <div className="bg-purple-50/60 border border-purple-200 rounded-xl p-4 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-purple-700 mb-2 tracking-wide">
+                  <Fingerprint className="w-3.5 h-3.5 shrink-0" /> Confidence
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="text-base font-semibold text-purple-900">{Math.min(100, Math.max(0, Math.round(memory.confidenceScore || 90)))}%</div>
+                  <div className="w-full h-1.5 bg-purple-200/80 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-600 rounded-full"
+                      style={{ width: `${Math.min(100, Math.max(0, Math.round(memory.confidenceScore || 90)))}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 3 */}
               <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
                   <FileType className="w-3.5 h-3.5 shrink-0" /> Data Type
@@ -103,7 +119,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
                 <div className="text-base font-medium text-zinc-900 break-words line-clamp-2 capitalize">{memory.category || 'general'}</div>
               </div>
 
-              {/* Box 3 */}
+              {/* Box 4 */}
               <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
                   <Hourglass className="w-3.5 h-3.5 shrink-0" /> Storage
@@ -111,7 +127,7 @@ export function PrivacyAssessmentModal({ memory, onClose }) {
                 <div className="text-base font-medium text-zinc-900 break-words line-clamp-2">{storageDuration}</div>
               </div>
 
-              {/* Box 4 */}
+              {/* Box 5 */}
               <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase text-zinc-500 mb-2 tracking-wide">
                   <Lock className="w-3.5 h-3.5 shrink-0" /> Access

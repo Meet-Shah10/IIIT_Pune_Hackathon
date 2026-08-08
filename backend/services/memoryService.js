@@ -13,12 +13,17 @@ async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory
             role: 'system',
             content: `{
   "reply": "Conversational response",
+  "confidence_score": 95,
   "negotiation_prompt": {
     "content": "Normalized 3rd-person fact (e.g., 'User lives in Pune')",
     "category": "name|location|age|health|preference|habit|personal_details|educational|misc",
-    "reason": "Brief extraction reason"
+    "reason": "Brief extraction reason",
+    "confidence_score": 95
   }
 }
+
+STRICTLY FOLLOW THE SPECIFIED CATEGORIES ONLY (name, location, age, health, preference, habit, personal_details, educational, misc). DO NOT USE ANY OTHER CATEGORY.
+Include top-level "confidence_score" (0-100) representing how certain/grounded the AI is in its response. Also include "confidence_score" (0-100) inside "negotiation_prompt" for extracted facts.
 
 Rules:
 1. MEMORY TOGGLE CHECK (highest priority): 
@@ -57,14 +62,52 @@ Rules:
     // Use shared chatCompletion helper for consistent configuration
     const content = await chatCompletion(messages, {
         temperature: 0.2,
-        max_tokens: 500,
+        max_tokens: 1024,
         response_format: { type: 'json_object' }
     });
-    // chatCompletion returns the LLM's message content as a string
+    // Clean out reasoning tags, markdown fences, or extra text surrounding JSON
+    let cleaned = (content || '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+        cleaned = jsonMatch[0];
+    }
+
     try {
-        return JSON.parse(content);
+        const parsed = JSON.parse(cleaned);
+        let reply = parsed.reply || parsed.response || parsed.message || parsed.content || parsed.text || parsed.answer || parsed.explanation || parsed.result || parsed.joke;
+
+        if (!reply) {
+            const stringKeys = Object.keys(parsed).filter(k => k !== 'negotiation_prompt' && typeof parsed[k] === 'string');
+            if (stringKeys.length > 0) {
+                reply = parsed[stringKeys[0]];
+            }
+        }
+
+        reply = reply || 'I am processing your request.';
+
+        const responseConfidence = typeof parsed.confidence_score === 'number'
+            ? Math.min(100, Math.max(0, Math.round(parsed.confidence_score)))
+            : (typeof parsed.negotiation_prompt?.confidence_score === 'number'
+                ? Math.min(100, Math.max(0, Math.round(parsed.negotiation_prompt.confidence_score)))
+                : 95);
+
+        return {
+            ...parsed,
+            reply,
+            confidence_score: responseConfidence
+        };
     } catch (err) {
-        throw new Error(`Failed to parse JSON from LLM response: ${err.message}`);
+        console.error('Failed to parse JSON from LLM response. Raw content:', content);
+        return {
+            reply: cleaned || 'I am processing your request.',
+            confidence_score: 90,
+            negotiation_prompt: null
+        };
     }
 }
 
@@ -82,10 +125,11 @@ async function generateSessionTitle(firstPrompt) {
         ];
         const title = await chatCompletion(messages, {
             temperature: 0.1,
-            max_tokens: 20,
-            model: 'nvidia/nemotron-mini-4b-instruct'
+            max_tokens: 150,
+            model: 'meta/llama-3.1-8b-instruct'
         });
-        return title.trim().replace(/^["']|["']$/g, '');
+        const cleanTitle = (title || '').trim().replace(/^["']|["']$/g, '');
+        return cleanTitle || 'New Chat';
     } catch (err) {
         console.error('Failed to generate session title:', err);
         return 'New Chat';

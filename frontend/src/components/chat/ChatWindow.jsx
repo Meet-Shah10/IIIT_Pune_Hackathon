@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Plus, Mic, ArrowUp, Cpu, Copy, Edit3, Trash2, RefreshCw, Database, UserCheck, X } from 'lucide-react'
 import { useSidebar } from '../../context/SidebarContext'
-
+import ConfidenceChart from './ConfidenceChart'
 import LanguageSelector from '../ui/LanguageSelector'
 
 function MiniMascot() {
@@ -37,7 +37,7 @@ function MiniMascot() {
   )
 }
 
-export default function ChatWindow({ messages, events, isLoading, onSendMessage }) {
+export default function ChatWindow({ messages, events, isLoading, onSendMessage, sessionId }) {
   const { isOpen: sidebarOpen } = useSidebar()
   const [inputValue, setInputValue] = useState('')
   const [storeMemories, setStoreMemories] = useState(true)
@@ -166,28 +166,27 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
       } catch { return 'en-US' }
     })()
 
-    let finalTranscript = ''
+    const initialText = inputValue.trim()
+    const prefix = initialText ? initialText + ' ' : ''
 
     recognition.onresult = (event) => {
-      let interim = ''
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      let finalTranscript = ''
+      let interimTranscript = ''
+
+      for (let i = 0; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript
+          finalTranscript += transcript
         } else {
-          interim += event.results[i][0].transcript
+          interimTranscript += transcript
         }
       }
-      setInputValue((prev) => {
-        const base = finalTranscript || prev
-        return (base + interim).trim()
-      })
+
+      setInputValue(prefix + (finalTranscript + interimTranscript).trimStart())
     }
 
     recognition.onend = () => {
       setIsListening(false)
-      if (finalTranscript) {
-        setInputValue(finalTranscript.trim())
-      }
     }
 
     recognition.onerror = (e) => {
@@ -360,6 +359,11 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
         style={{ left: typeof window !== 'undefined' && window.innerWidth >= 768 ? (sidebarOpen ? '16rem' : '3rem') : '0' }}
       >
         <div className="w-full max-w-3xl pointer-events-auto">
+
+          {/* Confidence Chart Panel */}
+          <div className="mb-2 bg-white border border-zinc-200 rounded-2xl overflow-hidden shadow-[0_4px_16px_rgb(0,0,0,0.05)]">
+            <ConfidenceChart sessionId={sessionId} messages={messages} />
+          </div>
 
           <form onSubmit={handleSubmit} className="relative flex flex-col w-full bg-white border border-zinc-200 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-zinc-300 focus-within:shadow-[0_12px_40px_rgb(0,0,0,0.12)] transition-all duration-200">
 

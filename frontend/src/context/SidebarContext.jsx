@@ -13,8 +13,26 @@ export function SidebarProvider({ children }) {
 
   const loadSessions = useCallback(async () => {
     try {
-      const data = await api.getSessions()
-      setSessions(data)
+      const data = await api.getChatSessions()
+      
+      const current = getSessionId();
+      const exists = data.some(s => s.sessionId === current);
+      
+      if (!exists && data.length > 0) {
+        // Local session is invalid, select the most recent valid one
+        persistSessionId(data[0].sessionId);
+        setSessionIdState(data[0].sessionId);
+        setSessions(data);
+      } else if (!exists && data.length === 0) {
+        // User has absolutely no sessions, auto-create one
+        const newData = await api.createChatSession();
+        const nextSessionId = newData?.sessionId || current;
+        persistSessionId(nextSessionId);
+        setSessionIdState(nextSessionId);
+        setSessions([{ sessionId: nextSessionId, title: 'New Chat' }]);
+      } else {
+        setSessions(data);
+      }
     } catch (err) {
       console.error('Failed to load sessions:', err)
     }

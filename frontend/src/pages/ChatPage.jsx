@@ -12,6 +12,12 @@ export default function ChatPage() {
   const { isOpen, toggle, registerNewChat, sessionId, selectSession, loadSessions } = useSidebar()
 
   const [messages, setMessages] = useState([])
+  const messagesRef = useRef(messages)
+  
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
   const sessionIdRef = useRef(sessionId)
 
   const userId = getUserId();
@@ -69,6 +75,7 @@ export default function ChatPage() {
           role: 'assistant',
           content: replyContent,
           negotiationPrompt: negotiationPrompt || null,
+          confidenceScore: typeof data?.confidence_score === 'number' ? data.confidence_score : null,
           createdAt: new Date().toISOString(),
         };
         setMessages(prev => [...prev, assistantMsg]);
@@ -91,6 +98,11 @@ export default function ChatPage() {
   }
 
   const handleNewChat = async () => {
+    // Prevent creating a new session if the current one is already completely empty
+    if (messagesRef.current.length === 0) {
+      return;
+    }
+
     try {
       const data = await api.createChatSession(userId)
       const nextSessionId = data?.sessionId || buildSessionId()
@@ -140,25 +152,6 @@ export default function ChatPage() {
 
           <LanguageSelector />
 
-          {/* Book icon (decorative) */}
-          <button className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            </svg>
-          </button>
-
-          {/* Sidebar toggle — opens or collapses the sidebar */}
-          <button
-            onClick={toggle}
-            className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors"
-            title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {isOpen
-              ? <PanelLeftClose className="w-4 h-4" />
-              : <PanelLeftOpen className="w-4 h-4" />
-            }
-          </button>
         </div>
       </header>
 
@@ -170,6 +163,7 @@ export default function ChatPage() {
             events={events}
             isLoading={chatMutation.isPending}
             onSendMessage={handleSendMessage}
+            sessionId={sessionId}
           />
         </div>
       </div>
