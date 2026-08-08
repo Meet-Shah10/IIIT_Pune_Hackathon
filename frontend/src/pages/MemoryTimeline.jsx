@@ -63,6 +63,7 @@ export default function MemoryTimeline() {
           },
         ],
         sensitivity: (event.memorySensitivity || event.memory?.sensitivity || 'low').toLowerCase(),
+        confidenceScore: typeof event.confidenceScore === 'number' ? event.confidenceScore : (event.memory?.confidenceScore || 90),
         ttl: event.memory?.status || 'active',
         reason: event.reason || '',
         detail: event.detail || '',
@@ -204,19 +205,31 @@ export default function MemoryTimeline() {
                         )}
                       </div>
 
-                      {/* Footer / Injection Requirement */}
-                      <div className="px-5 py-4 border-t border-zinc-100 bg-white flex items-center gap-4">
+                      {/* Footer / Metadata Badges */}
+                      <div className="px-5 py-4 border-t border-zinc-100 bg-white flex flex-wrap items-center gap-4">
                         <span className="text-xs text-zinc-500 font-medium flex items-center gap-1.5">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                           Expires in 6 days
                         </span>
                         
+                        {/* Confidence Score Meter Badge */}
+                        <div className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-2 shadow-xs">
+                          <span>Confidence: {Math.min(100, Math.max(0, Math.round(commit.confidenceScore)))}%</span>
+                          <div className="w-10 h-1.5 bg-purple-200/70 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-purple-600 rounded-full transition-all duration-300"
+                              style={{ width: `${Math.min(100, Math.max(0, Math.round(commit.confidenceScore)))}%` }}
+                            />
+                          </div>
+                        </div>
+
                         {/* Clickable Sensitivity Tag to trigger modal */}
                         <button 
                           onClick={() => setSelectedMemory({
                             id: commit.id,
                             content: commit.title,
                             sensitivity: commit.sensitivity,
+                            confidenceScore: commit.confidenceScore,
                             timestamp: commit.timeAgo,
                             category: commit.memory?.category || 'general',
                             reason: commit.reason,

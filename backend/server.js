@@ -181,7 +181,11 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
     // 5️⃣ If memory enabled and a negotiation_prompt exists, classify & store
     let memorySaved = false;
     if (memoryEnabled && extracted?.negotiation_prompt) {
-      const { content, category, reason } = extracted.negotiation_prompt;
+      const { content, category, reason, confidence_score } = extracted.negotiation_prompt;
+      const confidenceScore = typeof confidence_score === 'number' 
+        ? Math.min(100, Math.max(0, Math.round(confidence_score))) 
+        : 90;
+
       const classification = await classifySensitivity(content, category);
       const memoryReason = reason || classification.reasoning || 'User shared a durable personal detail';
 
@@ -208,6 +212,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
         expiresAt,
         autoDelete: true,
         sessionId,
+        confidenceScore,
       });
 
       await MemoryEvent.create({
@@ -219,6 +224,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
         memoryContent: content,
         memoryCategory: category || 'general',
         memorySensitivity: classification.sensitivity,
+        confidenceScore,
         savedAt: newMemory.createdAt,
       });
 
@@ -227,6 +233,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
         sensitivity: classification.sensitivity,
         source: classification.source || 'chat',
         reasoning: memoryReason,
+        confidenceScore,
       };
       memorySaved = true;
     }

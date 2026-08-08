@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { MapPin, BrainCircuit, PlaneTakeoff } from 'lucide-react'
 
-export function MemoryInterceptCard({ detail, category, sensitivity }) {
+export function MemoryInterceptCard({ detail, category, sensitivity, confidenceScore = 90 }) {
   const [active, setActive] = useState(true)
 
   // Determine sensitivity color and label
   const isMedOrHigh = sensitivity === 'medium' || sensitivity === 'high' || sensitivity === 'critical'
+  const score = Math.min(100, Math.max(0, Math.round(confidenceScore)))
   
   return (
     <div className="flex gap-3 w-full mt-2">
@@ -29,15 +30,32 @@ export function MemoryInterceptCard({ detail, category, sensitivity }) {
               </p>
             </div>
             
-            {/* Privacy Nutrition Label */}
-            <div className="inline-flex items-center gap-1.5 bg-zinc-900 border border-zinc-700 px-3 py-1.5 rounded-full shadow-inner">
-              <div className={`w-2 h-2 rounded-full ${isMedOrHigh ? 'bg-[var(--color-primary-container)] animate-pulse' : 'bg-green-500'}`}></div>
-              <span className="font-label-caps text-[10px] text-white tracking-wider">
-                SENSITIVITY: {sensitivity?.toUpperCase() || 'LOW'}
-              </span>
-              <span className="text-zinc-600 text-[10px] mx-1">|</span>
-              <MapPin className="w-3 h-3 text-zinc-500" />
-              <span className="font-label-caps text-[10px] text-zinc-500">{category?.toUpperCase() || 'GENERAL'}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Light-Lavender Certainty Bar / Confidence Meter */}
+              <div className="inline-flex items-center gap-2 bg-purple-950/80 border border-purple-500/30 px-3 py-1.5 rounded-full shadow-sm text-purple-200">
+                <span className="font-label-caps text-[10px] tracking-wider font-semibold">
+                  CERTAINTY: {score}%
+                </span>
+                <div className="w-12 h-1.5 bg-purple-900/60 rounded-full overflow-hidden border border-purple-400/20">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      score < 70 ? 'bg-amber-400' : 'bg-purple-300 shadow-[0_0_8px_rgba(216,180,254,0.8)]'
+                    }`}
+                    style={{ width: `${score}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Privacy Nutrition Label */}
+              <div className="inline-flex items-center gap-1.5 bg-zinc-900 border border-zinc-700 px-3 py-1.5 rounded-full shadow-inner">
+                <div className={`w-2 h-2 rounded-full ${isMedOrHigh ? 'bg-[var(--color-primary-container)] animate-pulse' : 'bg-green-500'}`}></div>
+                <span className="font-label-caps text-[10px] text-white tracking-wider">
+                  SENSITIVITY: {sensitivity?.toUpperCase() || 'LOW'}
+                </span>
+                <span className="text-zinc-600 text-[10px] mx-1">|</span>
+                <MapPin className="w-3 h-3 text-zinc-500" />
+                <span className="font-label-caps text-[10px] text-zinc-500">{category?.toUpperCase() || 'GENERAL'}</span>
+              </div>
             </div>
           </div>
 

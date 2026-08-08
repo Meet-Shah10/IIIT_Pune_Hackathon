@@ -16,10 +16,13 @@ async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory
   "negotiation_prompt": {
     "content": "Normalized 3rd-person fact (e.g., 'User lives in Pune')",
     "category": "name|location|age|health|preference|habit|personal_details|educational|misc",
+    "reason": "Brief extraction reason",
+    "confidence_score": 95
   }
 }
 
 STRICTLY FOLLOW THE SPECIFIED CATEGORIES ONLY (name, location, age, health, preference, habit, personal_details, educational, misc). DO NOT USE ANY OTHER CATEGORY.
+Include "confidence_score" as an integer between 0 and 100 representing how certain the AI is about the extracted fact (e.g., 95 for explicit statements like 'I am 19', 60 for implied facts).
 
 Rules:
 1. MEMORY TOGGLE CHECK (highest priority): 
