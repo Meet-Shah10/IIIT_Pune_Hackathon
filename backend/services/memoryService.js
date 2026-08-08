@@ -17,7 +17,7 @@ async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory
     "content": "Normalized 3rd-person fact (e.g., 'User lives in Pune')",
     "category": "name|location|age|health|preference|habit|personal_details|educational|misc",
     "reason": "Brief extraction reason"
-  }
+  } STRICTLY FOLLOW THE SPECIFIED CATEGORIES NOT ANOTHER CATEGORY IN THE JSON OBJECT
 }
 
 Rules:
