@@ -16,9 +16,10 @@ async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory
   "negotiation_prompt": {
     "content": "Normalized 3rd-person fact (e.g., 'User lives in Pune')",
     "category": "name|location|age|health|preference|habit|personal_details|educational|misc",
-    "reason": "Brief extraction reason"
-  } STRICTLY FOLLOW THE SPECIFIED CATEGORIES NOT ANOTHER CATEGORY IN THE JSON OBJECT
+  }
 }
+
+STRICTLY FOLLOW THE SPECIFIED CATEGORIES ONLY (name, location, age, health, preference, habit, personal_details, educational, misc). DO NOT USE ANY OTHER CATEGORY.
 
 Rules:
 1. MEMORY TOGGLE CHECK (highest priority): 
