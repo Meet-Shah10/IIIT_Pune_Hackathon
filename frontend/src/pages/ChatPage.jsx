@@ -12,6 +12,12 @@ export default function ChatPage() {
   const { isOpen, toggle, registerNewChat, sessionId, selectSession, loadSessions } = useSidebar()
 
   const [messages, setMessages] = useState([])
+  const messagesRef = useRef(messages)
+  
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
+
   const sessionIdRef = useRef(sessionId)
 
   const userId = getUserId();
@@ -91,6 +97,11 @@ export default function ChatPage() {
   }
 
   const handleNewChat = async () => {
+    // Prevent creating a new session if the current one is already completely empty
+    if (messagesRef.current.length === 0) {
+      return;
+    }
+
     try {
       const data = await api.createChatSession(userId)
       const nextSessionId = data?.sessionId || buildSessionId()

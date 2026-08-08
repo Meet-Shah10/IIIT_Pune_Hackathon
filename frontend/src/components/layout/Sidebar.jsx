@@ -56,7 +56,7 @@ export function Sidebar() {
         <div className="fixed left-0 top-0 h-full w-12 bg-[#f9f9f9] border-r border-zinc-200 flex flex-col items-center py-4 gap-4 z-40 transition-all duration-300 ease-in-out hidden md:flex">
           {/* Logo — click to go home */}
           <button
-            onClick={() => navigate('/')}
+            onClick={handleNewChat}
             className="w-8 h-8 flex items-center justify-center text-zinc-800 hover:text-zinc-500 transition-colors"
             title="Go to Chat"
           >
@@ -95,7 +95,7 @@ export function Sidebar() {
           <div className="flex items-center gap-2">
             {/* Logo icon — clickable, navigates to chat */}
             <button
-              onClick={() => navigate('/')}
+              onClick={handleNewChat}
               className="w-6 h-6 flex items-center justify-center text-zinc-800 hover:text-zinc-500 transition-colors"
               title="Go to Chat"
             >
@@ -131,6 +131,10 @@ export function Sidebar() {
           <NavLink
             to="/"
             end
+            onClick={(e) => {
+              e.preventDefault();
+              handleNewChat();
+            }}
             className={({ isActive }) =>
               `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
                 ? 'bg-zinc-200/50 text-zinc-900'
