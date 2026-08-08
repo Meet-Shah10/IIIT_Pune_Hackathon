@@ -60,11 +60,41 @@ Rules:
         max_tokens: 1024,
         response_format: { type: 'json_object' }
     });
-    // chatCompletion returns the LLM's message content as a string
+    // Clean out reasoning tags, markdown fences, or extra text surrounding JSON
+    let cleaned = (content || '')
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
+        .replace(/```json/gi, '')
+        .replace(/```/g, '')
+        .trim();
+
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+        cleaned = jsonMatch[0];
+    }
+
     try {
-        return JSON.parse(content);
+        const parsed = JSON.parse(cleaned);
+        let reply = parsed.reply || parsed.response || parsed.message || parsed.content || parsed.text || parsed.answer || parsed.explanation || parsed.result || parsed.joke;
+
+        if (!reply) {
+            const stringKeys = Object.keys(parsed).filter(k => k !== 'negotiation_prompt' && typeof parsed[k] === 'string');
+            if (stringKeys.length > 0) {
+                reply = parsed[stringKeys[0]];
+            }
+        }
+
+        reply = reply || 'I am processing your request.';
+
+        return {
+            ...parsed,
+            reply
+        };
     } catch (err) {
-        throw new Error(`Failed to parse JSON from LLM response: ${err.message}`);
+        console.error('Failed to parse JSON from LLM response. Raw content:', content);
+        return {
+            reply: cleaned || 'I am processing your request.',
+            negotiation_prompt: null
+        };
     }
 }
 
