@@ -57,7 +57,7 @@ Rules:
     // Use shared chatCompletion helper for consistent configuration
     const content = await chatCompletion(messages, {
         temperature: 0.2,
-        max_tokens: 500,
+        max_tokens: 1024,
         response_format: { type: 'json_object' }
     });
     // chatCompletion returns the LLM's message content as a string
@@ -82,10 +82,11 @@ async function generateSessionTitle(firstPrompt) {
         ];
         const title = await chatCompletion(messages, {
             temperature: 0.1,
-            max_tokens: 20,
+            max_tokens: 150,
             model: 'nvidia/nvidia-nemotron-nano-9b-v2'
         });
-        return title.trim().replace(/^["']|["']$/g, '');
+        const cleanTitle = (title || '').trim().replace(/^["']|["']$/g, '');
+        return cleanTitle || 'New Chat';
     } catch (err) {
         console.error('Failed to generate session title:', err);
         return 'New Chat';
