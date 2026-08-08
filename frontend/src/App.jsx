@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { Layout } from './components/layout/Layout'
 import AuthPage from './pages/AuthPage'
+import LandingPage from './pages/LandingPage'
 import ChatPage from './pages/ChatPage'
 import DashboardOverview from './pages/DashboardOverview'
 import DashboardPage from './pages/DashboardPage'
@@ -37,12 +38,13 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
-            
+
             {/* Redirect /login to /auth */}
             <Route path="/login" element={<Navigate to="/auth" replace />} />
-            
-            <Route path="/" element={
+
+            <Route path="/app" element={
               <ProtectedRoute>
                 <Layout />
               </ProtectedRoute>
@@ -52,7 +54,7 @@ function App() {
               <Route path="vault" element={<DashboardPage />} />
               <Route path="timeline" element={<MemoryTimeline />} />
             </Route>
-            
+
           </Routes>
         </BrowserRouter>
       </AuthProvider>
