@@ -81,29 +81,57 @@ router.delete('/:memoryId', async (req, res) => {
   }
 });
 
-// Update memory (e.g. change expiresAt or autoDelete)
+// Update memory (e.g. change expiresAt, autoDelete, or content)
 router.patch('/:memoryId', async (req, res) => {
   const { memoryId } = req.params;
-  const { expiresAt, autoDelete } = req.body;
+  const { expiresAt, expiresInMonths, expiresInDays, autoDelete, content } = req.body;
   try {
     const mem = await Memory.findById(memoryId);
     if (!mem) return res.status(404).json({ error: 'Memory not found' });
 
-    if (expiresAt !== undefined) mem.expiresAt = expiresAt;
+    let eventDetail = '';
+    let eventAction = 'updated';
+
+    // Handle content edit — log before/after diff
+    if (content !== undefined && content.trim() && content.trim() !== mem.content) {
+      const oldContent = mem.content;
+      mem.content = content.trim();
+      eventDetail = `User edited memory content: "${oldContent}" → "${mem.content}"`;
+      eventAction = 'updated';
+    }
+
+    if (expiresAt !== undefined) {
+      mem.expiresAt = expiresAt;
+    } else if (expiresInMonths !== undefined || expiresInDays !== undefined) {
+      const now = new Date();
+      if (expiresInMonths) {
+        now.setMonth(now.getMonth() + parseInt(expiresInMonths, 10));
+      }
+      if (expiresInDays) {
+        now.setDate(now.getDate() + parseInt(expiresInDays, 10));
+      }
+      mem.expiresAt = now;
+      eventDetail = `User set memory timer to ${expiresInMonths || 0} months, ${expiresInDays || 0} days`;
+    }
+
     if (autoDelete !== undefined) mem.autoDelete = autoDelete;
+
+    if (!eventDetail) {
+      eventDetail = 'User updated retention settings';
+    }
 
     await mem.save();
 
     await MemoryEvent.create({
       userId: mem.userId,
       memoryId,
-      action: 'updated',
-      detail: `User updated retention settings`,
-      reason: 'Manual retention policy change',
+      action: eventAction,
+      detail: eventDetail,
+      reason: content !== undefined ? 'User manually edited this memory from the dashboard' : 'Manual retention policy change',
       memoryContent: mem.content,
       memoryCategory: mem.category || 'general',
       memorySensitivity: mem.sensitivity || 'low',
-      savedAt: mem.createdAt,
+      savedAt: new Date(),
     });
 
     res.json({ message: 'Memory updated', memory: mem });

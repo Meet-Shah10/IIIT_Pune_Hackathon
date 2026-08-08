@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Brain, Trash2, X, Activity, Sliders, Clock, User, BookOpen, FileText, Edit3 } from 'lucide-react'
+import { Brain, Trash2, X, Activity, Sliders, Clock, User, BookOpen, FileText, Edit3, Timer } from 'lucide-react'
 
 // The 6 Canonical Backend Categories
 const CANONICAL_CATEGORIES = [
@@ -74,8 +74,60 @@ function normalizeCategory(rawCat) {
   return 'miscellaneous'
 }
 
-export default function MemoryRelationshipMap({ memories = [], onForgetMemory }) {
+export default function MemoryRelationshipMap({ memories = [], onForgetMemory, onEditMemory, onUpdateRetention }) {
   const [selectedCategory, setSelectedCategory] = useState(null)
+  
+  // Edit Memory State
+  const [editingMemory, setEditingMemory] = useState(null)
+  const [editValue, setEditValue] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Retention Modal State
+  const [retentionMemory, setRetentionMemory] = useState(null)
+  const [retentionMonths, setRetentionMonths] = useState('')
+  const [retentionDays, setRetentionDays] = useState('30')
+  const [isSavingRetention, setIsSavingRetention] = useState(false)
+
+  const openEdit = (mem) => {
+    setEditingMemory(mem)
+    setEditValue(mem.content)
+  }
+
+  const handleEditSave = async () => {
+    if (!editValue.trim() || !editingMemory) return
+    setIsSaving(true)
+    try {
+      await onEditMemory(editingMemory.id, editValue.trim())
+      setEditingMemory(null)
+    } catch (err) {
+      console.error('Edit failed:', err)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const openRetention = (mem) => {
+    setRetentionMemory(mem)
+    setRetentionMonths('')
+    setRetentionDays('30') // default form state
+  }
+
+  const handleRetentionSave = async () => {
+    if (!retentionMemory || !onUpdateRetention) return
+    setIsSavingRetention(true)
+    try {
+      await onUpdateRetention(retentionMemory.id, {
+        expiresInMonths: retentionMonths || 0,
+        expiresInDays: retentionDays || 0,
+        autoDelete: true
+      })
+      setRetentionMemory(null)
+    } catch (err) {
+      console.error('Retention update failed:', err)
+    } finally {
+      setIsSavingRetention(false)
+    }
+  }
 
   // Initialize categoriesMap with EXACTLY the 6 canonical backend categories
   const categoriesMap = {
@@ -349,7 +401,16 @@ export default function MemoryRelationshipMap({ memories = [], onForgetMemory })
                     {/* Actions */}
                     <div className="flex items-center gap-1">
                       <button
+                        title="Set Expiration Timer"
+                        onClick={() => openRetention(mem)}
+                        className="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors flex items-center gap-1 text-xs"
+                      >
+                        <Timer className="w-3.5 h-3.5" />
+                        <span className="hidden group-hover:inline font-medium">Timer</span>
+                      </button>
+                      <button
                         title="Edit memory"
+                        onClick={() => openEdit(mem)}
                         className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1 text-xs"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -379,6 +440,135 @@ export default function MemoryRelationshipMap({ memories = [], onForgetMemory })
         </div>
 
       </div>
+
+      {/* Edit Memory Modal */}
+      {editingMemory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-zinc-200 w-full max-w-md mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/60">
+              <div className="flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-blue-500" />
+                <span className="font-semibold text-zinc-900 text-sm">Edit Memory</span>
+              </div>
+              <button
+                onClick={() => setEditingMemory(null)}
+                className="p-1 rounded-lg hover:bg-zinc-200 transition-colors text-zinc-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+                Memory Content
+              </label>
+              <textarea
+                className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 resize-none min-h-[100px] transition-all"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                autoFocus
+                placeholder="Update memory content..."
+              />
+              <p className="text-xs text-zinc-400 mt-2">This change will be saved to the database and logged in the Memory Timeline.</p>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-zinc-100 bg-zinc-50/40">
+              <button
+                onClick={() => setEditingMemory(null)}
+                className="px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditSave}
+                disabled={!editValue.trim() || isSaving}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center gap-2"
+              >
+                {isSaving ? (
+                  <><span className="inline-block w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin mr-1" />Saving...</>
+                ) : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Retention Timer Modal */}
+      {retentionMemory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-zinc-200 w-full max-w-sm mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/60">
+              <div className="flex items-center gap-2">
+                <Timer className="w-4 h-4 text-amber-500" />
+                <span className="font-semibold text-zinc-900 text-sm">Set Auto-Delete Timer</span>
+              </div>
+              <button
+                onClick={() => setRetentionMemory(null)}
+                className="p-1 rounded-lg hover:bg-zinc-200 transition-colors text-zinc-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <p className="text-sm text-zinc-600 mb-4 leading-relaxed">
+                Choose when this memory should be automatically deleted from the system.
+              </p>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Months</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="120"
+                    placeholder="0"
+                    className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+                    value={retentionMonths}
+                    onChange={(e) => setRetentionMonths(e.target.value)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Days</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="365"
+                    placeholder="30"
+                    className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+                    value={retentionDays}
+                    onChange={(e) => setRetentionDays(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-zinc-100 bg-zinc-50/40">
+              <button
+                onClick={() => setRetentionMemory(null)}
+                className="px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRetentionSave}
+                disabled={isSavingRetention}
+                className="px-5 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+              >
+                {isSavingRetention ? (
+                  <><span className="inline-block w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin mr-1" />Saving...</>
+                ) : 'Set Timer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -73,6 +73,19 @@ export default function DashboardOverview() {
     }
   }
 
+  const handleEdit = async (id, newContent) => {
+    try {
+      await api.editMemory(id, newContent)
+      // Instantly reflect in UI
+      setMemories((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, content: newContent } : m))
+      )
+    } catch (error) {
+      console.error('Failed to edit memory:', error)
+      throw error // re-throw so the modal's isSaving state resets
+    }
+  }
+
   const handleUpdateRetention = async (id, data) => {
     try {
       await api.updateMemory(id, data)
@@ -328,6 +341,8 @@ export default function DashboardOverview() {
       <MemoryRelationshipMap
         memories={memories}
         onForgetMemory={handleForget}
+        onEditMemory={handleEdit}
+        onUpdateRetention={handleUpdateRetention}
       />
 
       {/* Review Modal */}

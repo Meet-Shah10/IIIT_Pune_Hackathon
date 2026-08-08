@@ -9,10 +9,9 @@ import { Menu, PanelLeftOpen, PanelLeftClose, Plus } from 'lucide-react'
 
 export default function ChatPage() {
   const queryClient = useQueryClient()
-  const { isOpen, toggle, registerNewChat } = useSidebar()
+  const { isOpen, toggle, registerNewChat, sessionId, selectSession, loadSessions } = useSidebar()
 
   const [messages, setMessages] = useState([])
-  const [sessionId, setSessionIdState] = useState(() => getSessionId())
   const sessionIdRef = useRef(sessionId)
 
   const userId = getUserId();
@@ -76,6 +75,7 @@ export default function ChatPage() {
       }
       queryClient.invalidateQueries({ queryKey: ['memories'] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      loadSessions(); // refresh titles
     }
   })
 
@@ -94,16 +94,15 @@ export default function ChatPage() {
     try {
       const data = await api.createChatSession(userId)
       const nextSessionId = data?.sessionId || buildSessionId()
-      const persistedSessionId = setSessionId(nextSessionId)
-      sessionIdRef.current = persistedSessionId
-      setSessionIdState(persistedSessionId)
+      selectSession(nextSessionId)
       setMessages([])
+      loadSessions()
     } catch (error) {
       console.error('Failed to create new chat session:', error)
-      const fallbackSessionId = setSessionId(buildSessionId())
-      sessionIdRef.current = fallbackSessionId
-      setSessionIdState(fallbackSessionId)
+      const fallbackSessionId = buildSessionId()
+      selectSession(fallbackSessionId)
       setMessages([])
+      loadSessions()
     }
   }
 

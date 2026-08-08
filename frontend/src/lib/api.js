@@ -68,6 +68,20 @@ export const api = {
     return res.json();
   },
 
+  // Edit a memory's content (saves to DB + logs to timeline)
+  editMemory: async (id, content) => {
+    const res = await fetch(`${API_BASE}/memories/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': USER_ID,
+      },
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) throw new Error('Failed to edit memory');
+    return res.json();
+  },
+
   // Create a fresh chat session on the backend
   createChatSession: async (userId = USER_ID) => {
     const res = await fetch(`${API_BASE}/chat/sessions`, {
@@ -91,12 +105,43 @@ export const api = {
     return res.json();
   },
 
-  // Get aggregated dashboard stats (counts, privacy breakdown, risk score, recent activity)
+  // Get aggregated dashboard stats
   getDashboardStats: async () => {
     const res = await fetch(`${API_BASE}/dashboard/stats/${USER_ID}`, {
       headers: { 'x-user-id': USER_ID },
     });
     if (!res.ok) throw new Error('Failed to fetch dashboard stats');
+    return res.json();
+  },
+
+  // Get all chat sessions for a user
+  getSessions: async () => {
+    const res = await fetch(`${API_BASE}/chat/sessions/${USER_ID}`, {
+      headers: { 'x-user-id': USER_ID },
+    });
+    if (!res.ok) throw new Error('Failed to fetch chat sessions');
+    return res.json();
+  },
+
+  // --- Settings APIs ---
+  getSettings: async () => {
+    const res = await fetch(`${API_BASE}/settings/${USER_ID}`, {
+      headers: { 'x-user-id': USER_ID },
+    });
+    if (!res.ok) throw new Error('Failed to fetch settings');
+    return res.json();
+  },
+
+  updateSettings: async (data) => {
+    const res = await fetch(`${API_BASE}/settings/${USER_ID}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': USER_ID,
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to update settings');
     return res.json();
   },
 };

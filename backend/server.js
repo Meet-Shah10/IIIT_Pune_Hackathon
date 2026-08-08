@@ -8,9 +8,13 @@ const { classifySensitivity } = require('./services/privacyClassifier');
 const Memory = require('./models/Memory');
 const MemoryEvent = require('./models/MemoryEvent');
 const Message = require('./models/Message');
+const Settings = require('./models/Settings');
+const ChatSession = require('./models/ChatSession');
 const memoryRoutes = require('./routes/memoryRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 const userIdMiddleware = require('./middleware/userId');
+const { startMemoryCleanupCron } = require('./services/memoryCleanup');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,7 +34,7 @@ function buildChatSessionId() {
 // -------------------------------------------------------------------
 // Session creation endpoint for the new-chat flow
 // -------------------------------------------------------------------
-app.post('/api/chat/sessions', (req, res) => {
+app.post('/api/chat/sessions', async (req, res) => {
   const { userId } = req.body;
   const resolvedUserId = userId || req.headers['x-user-id'];
 
@@ -39,7 +43,29 @@ app.post('/api/chat/sessions', (req, res) => {
   }
 
   const sessionId = buildChatSessionId();
-  return res.json({ sessionId, userId: resolvedUserId });
+  try {
+    await ChatSession.create({
+      sessionId,
+      userId: resolvedUserId,
+      title: 'New Chat'
+    });
+    return res.json({ sessionId, userId: resolvedUserId });
+  } catch (err) {
+    console.error('Error creating chat session:', err);
+    return res.status(500).json({ error: 'Failed to create chat session' });
+  }
+});
+
+// GET /api/chat/sessions/:userId
+app.get('/api/chat/sessions/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const sessions = await ChatSession.find({ userId }).sort({ createdAt: -1 });
+    return res.json(sessions);
+  } catch (err) {
+    console.error('Error fetching sessions:', err);
+    return res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
 });
 
 // -------------------------------------------------------------------
@@ -60,23 +86,36 @@ app.post('/api/chat', async (req, res) => {
       .limit(15);
     const recentHistory = rawHistory.reverse();
 
+    // 2️⃣ Pull active memories (negotiated facts) if "Use Memory" toggle is on
+    let injectedRelevantMemories = 'None';
+    if (useContext) {
+      const activeMemories = await Memory.find({ userId, status: 'active' });
+      if (activeMemories.length) {
+        injectedRelevantMemories = activeMemories
+          .map(m => `- ${m.content} (category: ${m.category})`)
+          .join('\n');
+      }
+    }
+
     const promptParts = [];
+    promptParts.push(`You are a helpful AI assistant.
+
+<truth_hierarchy>
+1. Current User Input (highest priority)
+2. Conversation History
+3. Long-Term Memory Facts (lowest priority - if a long-term memory contradicts recent conversation history, prioritize the recent conversation)
+</truth_hierarchy>
+
+<long_term_memories>
+${injectedRelevantMemories}
+</long_term_memories>
+
+Instruction: Rely ONLY on the provided memories for personal user facts. Do not invent or assume facts not present in <long_term_memories> or <conversation_history>.`);
 
     // Language requirement
     const langName = typeof language === 'object' ? language?.name : language;
     if (langName) {
       promptParts.push(`Language directive: You MUST write the conversational "reply" in ${langName}.`);
-    }
-
-    // 2️⃣ Pull active memories (negotiated facts) if "Use Memory" toggle is on
-    if (useContext) {
-      const activeMemories = await Memory.find({ userId, status: 'active' });
-      if (activeMemories.length) {
-        const facts = activeMemories
-          .map(m => `- ${m.content} (category: ${m.category})`)
-          .join('\n');
-        promptParts.push(`You have the following known facts about the user:\n${facts}\nUse them when replying.`);
-      }
     }
 
     const systemPrompt = promptParts.join('\n\n');
@@ -94,6 +133,18 @@ app.post('/api/chat', async (req, res) => {
       wasFactExtracted: Boolean(extracted?.negotiation_prompt),
     });
 
+    // Update Session Title to first message if it's currently default
+    try {
+      const session = await ChatSession.findOne({ sessionId });
+      if (session && session.title === 'New Chat') {
+        const cleanTitle = message.split(' ').slice(0, 5).join(' ') + (message.split(' ').length > 5 ? '...' : '');
+        session.title = cleanTitle || 'New Chat';
+        await session.save();
+      }
+    } catch (err) {
+      console.error('Error updating session title:', err);
+    }
+
     await Message.create({
       sessionId,
       role: 'assistant',
@@ -109,8 +160,18 @@ app.post('/api/chat', async (req, res) => {
       const classification = await classifySensitivity(content, category);
       const memoryReason = reason || classification.reasoning || 'User shared a durable personal detail';
 
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
+      let expiresAt = null;
+      let autoDelete = false;
+
+      // Fetch user settings to determine default retention
+      let userSettings = await Settings.findOne({ userId });
+      let retentionDays = userSettings ? userSettings.defaultRetentionDays : 30;
+
+      if (retentionDays !== null) {
+        expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + retentionDays);
+        autoDelete = true;
+      }
 
       const newMemory = await Memory.create({
         userId,
@@ -173,6 +234,10 @@ app.get('/api/chat/history/:sessionId', async (req, res) => {
 // -------------------------------------------------------------------
 app.use('/api/memories', memoryRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/settings', settingsRoutes);
+
+// Start cron jobs
+startMemoryCleanupCron();
 
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);

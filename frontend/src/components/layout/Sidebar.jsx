@@ -1,13 +1,43 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import {
   Plus, Monitor, LayoutDashboard, GitCommit, Settings,
-  ChevronDown, Bell, PanelLeftClose, PanelLeftOpen
+  ChevronDown, Bell, PanelLeftClose, PanelLeftOpen, X
 } from 'lucide-react'
 import { useSidebar } from '../../context/SidebarContext'
+import { api } from '../../lib/api'
 
 export function Sidebar() {
-  const { isOpen, toggle, triggerNewChat } = useSidebar()
+  const { isOpen, toggle, triggerNewChat, sessionId, selectSession, sessions } = useSidebar()
   const navigate = useNavigate()
+  
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [retentionDays, setRetentionDays] = useState(30)
+  const [isSavingSettings, setIsSavingSettings] = useState(false)
+
+  // Load settings when modal opens
+  useEffect(() => {
+    if (isSettingsOpen) {
+      api.getSettings().then(data => {
+        if (data && data.defaultRetentionDays !== undefined) {
+          setRetentionDays(data.defaultRetentionDays === null ? 'never' : data.defaultRetentionDays)
+        }
+      }).catch(err => console.error("Failed to load settings:", err))
+    }
+  }, [isSettingsOpen])
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true)
+    try {
+      const parsedDays = retentionDays === 'never' ? null : Number(retentionDays)
+      await api.updateSettings({ defaultRetentionDays: parsedDays })
+      setIsSettingsOpen(false)
+    } catch (err) {
+      console.error("Failed to save settings:", err)
+    } finally {
+      setIsSavingSettings(false)
+    }
+  }
 
   const handleNewChat = () => {
     // Navigate to chat first, then trigger the new-chat handler
@@ -143,13 +173,32 @@ export function Sidebar() {
             <ChevronDown className="w-3.5 h-3.5" />
           </div>
           <div className="space-y-0.5">
-            <button className="w-full text-left px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-200/50 rounded-md transition-colors truncate">
-              hello
-            </button>
+            {sessions.map((s) => {
+              const isActive = s.sessionId === sessionId
+              return (
+                <button
+                  key={s.sessionId}
+                  onClick={() => {
+                    selectSession(s.sessionId)
+                    navigate('/')
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors truncate font-medium ${
+                    isActive
+                      ? 'bg-zinc-200 text-zinc-900'
+                      : 'text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900'
+                  }`}
+                >
+                  {s.title}
+                </button>
+              )
+            })}
+            {sessions.length === 0 && (
+              <span className="text-xs text-zinc-400 px-3 italic">No sessions yet.</span>
+            )}
           </div>
         </div>
 
-        {/* Bottom Profile */}
+        {/* Bottom Profile & Settings */}
         <div className="mt-auto">
           <div className="px-4 py-3 border-t border-zinc-200 flex items-center justify-between hover:bg-zinc-200/30 cursor-pointer transition-colors">
             <div className="flex items-center gap-2">
@@ -160,10 +209,83 @@ export function Sidebar() {
               </div>
               <span className="text-xs font-medium text-zinc-700 truncate max-w-[120px]">harshlal0155935</span>
             </div>
-            <Bell className="w-3.5 h-3.5 text-zinc-500" />
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="text-zinc-500 hover:text-zinc-800 transition-colors p-1"
+                title="Settings"
+              >
+                <Settings className="w-3.5 h-3.5" />
+              </button>
+              <Bell className="w-3.5 h-3.5 text-zinc-500" />
+            </div>
           </div>
         </div>
       </nav>
+
+      {/* Global Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-zinc-200 w-full max-w-md mx-4 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 bg-zinc-50/60">
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-zinc-600" />
+                <span className="font-semibold text-zinc-900 text-sm">Chat Settings</span>
+              </div>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="p-1 rounded-lg hover:bg-zinc-200 transition-colors text-zinc-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-zinc-900 mb-1">Privacy & Data</h3>
+                <p className="text-xs text-zinc-500 mb-4">Configure your global defaults for memory retention.</p>
+                
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+                  Auto-delete new memories after
+                </label>
+                <select 
+                  className="w-full border border-zinc-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-400 focus:border-zinc-400 appearance-none bg-white"
+                  value={retentionDays}
+                  onChange={(e) => setRetentionDays(e.target.value)}
+                >
+                  <option value="7">7 Days</option>
+                  <option value="30">30 Days</option>
+                  <option value="90">3 Months (90 Days)</option>
+                  <option value="180">6 Months (180 Days)</option>
+                  <option value="never">Never (Keep indefinitely)</option>
+                </select>
+                <p className="text-xs text-zinc-400 mt-2">
+                  This setting applies to all newly extracted memories. You can still set custom timers on individual memories in the Dashboard.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-zinc-100 bg-zinc-50/40">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                disabled={isSavingSettings}
+                className="px-5 py-2 text-sm font-semibold text-white bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+              >
+                {isSavingSettings ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
