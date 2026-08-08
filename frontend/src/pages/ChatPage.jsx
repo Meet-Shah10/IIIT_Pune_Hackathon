@@ -69,6 +69,7 @@ export default function ChatPage() {
           role: 'assistant',
           content: replyContent,
           negotiationPrompt: negotiationPrompt || null,
+          confidenceScore: typeof data?.confidence_score === 'number' ? data.confidence_score : null,
           createdAt: new Date().toISOString(),
         };
         setMessages(prev => [...prev, assistantMsg]);
@@ -151,6 +152,7 @@ export default function ChatPage() {
             events={events}
             isLoading={chatMutation.isPending}
             onSendMessage={handleSendMessage}
+            sessionId={sessionId}
           />
         </div>
       </div>

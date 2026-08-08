@@ -186,4 +186,13 @@ export const api = {
     if (!res.ok) throw new Error('Failed to update settings');
     return res.json();
   },
+
+  // Get confidence score series for a session
+  getConfidenceSeries: async (sessionId) => {
+    const res = await fetch(`${API_BASE}/chat/confidence/${sessionId}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch confidence series');
+    return res.json();
+  },
 };

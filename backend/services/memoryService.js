@@ -13,6 +13,7 @@ async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory
             role: 'system',
             content: `{
   "reply": "Conversational response",
+  "confidence_score": 95,
   "negotiation_prompt": {
     "content": "Normalized 3rd-person fact (e.g., 'User lives in Pune')",
     "category": "name|location|age|health|preference|habit|personal_details|educational|misc",
@@ -22,7 +23,7 @@ async function extractMemoryAndRespond(message, systemPrompt = '', recentHistory
 }
 
 STRICTLY FOLLOW THE SPECIFIED CATEGORIES ONLY (name, location, age, health, preference, habit, personal_details, educational, misc). DO NOT USE ANY OTHER CATEGORY.
-Include "confidence_score" as an integer between 0 and 100 representing how certain the AI is about the extracted fact (e.g., 95 for explicit statements like 'I am 19', 60 for implied facts).
+Include top-level "confidence_score" (0-100) representing how certain/grounded the AI is in its response. Also include "confidence_score" (0-100) inside "negotiation_prompt" for extracted facts.
 
 Rules:
 1. MEMORY TOGGLE CHECK (highest priority): 
@@ -89,14 +90,22 @@ Rules:
 
         reply = reply || 'I am processing your request.';
 
+        const responseConfidence = typeof parsed.confidence_score === 'number'
+            ? Math.min(100, Math.max(0, Math.round(parsed.confidence_score)))
+            : (typeof parsed.negotiation_prompt?.confidence_score === 'number'
+                ? Math.min(100, Math.max(0, Math.round(parsed.negotiation_prompt.confidence_score)))
+                : 95);
+
         return {
             ...parsed,
-            reply
+            reply,
+            confidence_score: responseConfidence
         };
     } catch (err) {
         console.error('Failed to parse JSON from LLM response. Raw content:', content);
         return {
             reply: cleaned || 'I am processing your request.',
+            confidence_score: 90,
             negotiation_prompt: null
         };
     }

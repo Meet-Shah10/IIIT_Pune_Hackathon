@@ -150,12 +150,17 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
     const replyContent = extracted?.reply || extracted?.message || extracted?.response || 'I am processing your request.';
 
     // 4️⃣ Save User's new message and AI's response back to MongoDB
+    const responseConfidenceScore = typeof extracted?.confidence_score === 'number'
+      ? Math.min(100, Math.max(0, Math.round(extracted.confidence_score)))
+      : 90;
+
     await Message.create({
       sessionId,
       role: 'user',
       content: message,
       createdAt: new Date(),
       wasFactExtracted: Boolean(extracted?.negotiation_prompt),
+      confidenceScore: responseConfidenceScore,
     });
 
     // Update Session Title to a generated summary if it's currently default
@@ -176,6 +181,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
       content: replyContent,
       createdAt: new Date(),
       wasFactExtracted: false,
+      confidenceScore: responseConfidenceScore,
     });
 
     // 5️⃣ If memory enabled and a negotiation_prompt exists, classify & store
@@ -241,6 +247,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
     // 6️⃣ Respond
     return res.json({
       reply: replyContent,
+      confidence_score: responseConfidenceScore,
       negotiation_prompt: extracted?.negotiation_prompt || null,
       memorySaved,
     });
@@ -258,6 +265,26 @@ app.get('/api/chat/history/:sessionId', authMiddleware, async (req, res) => {
     return res.json(history);
   } catch (err) {
     console.error('Fetch history error:', err);
+    return res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
+// GET endpoint to retrieve confidence score series for a session
+app.get('/api/chat/confidence/:sessionId', authMiddleware, async (req, res) => {
+  const { sessionId } = req.params;
+  try {
+    const messages = await Message.find({ sessionId }).sort({ createdAt: 1 }).select('role content confidenceScore createdAt');
+    const series = messages
+      .filter(m => m.role === 'assistant')
+      .map((m, idx) => ({
+        index: idx + 1,
+        confidenceScore: typeof m.confidenceScore === 'number' ? m.confidenceScore : 90,
+        preview: m.content?.slice(0, 60) || '',
+        createdAt: m.createdAt,
+      }));
+    return res.json(series);
+  } catch (err) {
+    console.error('Fetch confidence error:', err);
     return res.status(500).json({ error: 'Failed to fetch history' });
   }
 });
