@@ -38,7 +38,7 @@ async function chatCompletion(messages, options = {}) {
 module.exports = {
     // Base endpoint for chat completions (used in memoryService)
     BASE_URL: 'https://integrate.api.nvidia.com/v1/chat/completions',
-    DEFAULT_MODEL: 'nvidia/nemotron-nano-9b-v2-2207',
+    DEFAULT_MODEL: 'nvidia/nvidia-nemotron-nano-9b-v2',
     API_KEY: process.env.NVIDIA_API_KEY,
     chatCompletion,
 };
