@@ -140,25 +140,6 @@ export default function ChatPage() {
 
           <LanguageSelector />
 
-          {/* Book icon (decorative) */}
-          <button className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-            </svg>
-          </button>
-
-          {/* Sidebar toggle — opens or collapses the sidebar */}
-          <button
-            onClick={toggle}
-            className="w-8 h-8 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-600 hover:bg-zinc-100 transition-colors"
-            title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {isOpen
-              ? <PanelLeftClose className="w-4 h-4" />
-              : <PanelLeftOpen className="w-4 h-4" />
-            }
-          </button>
         </div>
       </header>
 

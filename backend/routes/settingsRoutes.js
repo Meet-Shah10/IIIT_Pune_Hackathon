@@ -4,8 +4,8 @@ const router = express.Router();
 const Settings = require('../models/Settings');
 
 // Get settings for a user (creates default if it doesn't exist)
-router.get('/:userId', async (req, res) => {
-  const { userId } = req.params;
+router.get('/', async (req, res) => {
+  const userId = req.user._id.toString();
   try {
     let settings = await Settings.findOne({ userId });
     if (!settings) {
@@ -19,8 +19,8 @@ router.get('/:userId', async (req, res) => {
 });
 
 // Update settings for a user
-router.patch('/:userId', async (req, res) => {
-  const { userId } = req.params;
+router.patch('/', async (req, res) => {
+  const userId = req.user._id.toString();
   const { defaultRetentionDays } = req.body;
   
   try {

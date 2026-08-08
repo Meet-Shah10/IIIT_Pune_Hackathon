@@ -13,7 +13,7 @@ export function SidebarProvider({ children }) {
 
   const loadSessions = useCallback(async () => {
     try {
-      const data = await api.getSessions()
+      const data = await api.getChatSessions()
       setSessions(data)
     } catch (err) {
       console.error('Failed to load sessions:', err)

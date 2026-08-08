@@ -1,28 +1,66 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { api } from '../lib/api';
 
-const AuthContext = createContext(null)
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  // Simple stub for demo
-  const [user, setUser] = useState({ id: 'demo-123', email: 'demo@example.com' })
-  const [token, setToken] = useState('demo-token') // bypass login for now
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('token', token);
+      api.setToken(token);
+      // Fetch user profile
+      api.getMe()
+        .then((userData) => {
+          setUser(userData);
+        })
+        .catch((err) => {
+          console.error("Token invalid or expired", err);
+          logout();
+        })
+        .finally(() => setLoading(false));
+    } else {
+      localStorage.removeItem('token');
+      api.setToken(null);
+      setUser(null);
+      setLoading(false);
+    }
+  }, [token]);
 
   const login = async (email, password) => {
-    // Phase 1 implementation later
-    setUser({ id: 'demo-123', email })
-    setToken('demo-token')
-  }
+    try {
+      const data = await api.login(email, password);
+      setToken(data.token);
+      setUser(data);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const register = async (name, email, password) => {
+    try {
+      const data = await api.register(name, email, password);
+      setToken(data.token);
+      setUser(data);
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  };
 
   const logout = () => {
-    setUser(null)
-    setToken(null)
-  }
+    setToken(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => useContext(AuthContext);

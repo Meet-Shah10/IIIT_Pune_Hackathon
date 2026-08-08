@@ -4,9 +4,9 @@ const router = express.Router();
 const Memory = require('../models/Memory');
 const MemoryEvent = require('../models/MemoryEvent');
 
-// GET /api/dashboard/stats/:userId
-router.get('/stats/:userId', async (req, res) => {
-  const { userId } = req.params;
+// GET /api/dashboard/stats
+router.get('/stats', async (req, res) => {
+  const userId = req.user._id.toString();
 
   try {
     const now = new Date();

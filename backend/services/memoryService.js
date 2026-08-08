@@ -113,7 +113,7 @@ async function generateSessionTitle(firstPrompt) {
         const title = await chatCompletion(messages, {
             temperature: 0.1,
             max_tokens: 150,
-            model: 'nvidia/nvidia-nemotron-nano-9b-v2'
+            model: 'meta/llama-3.1-8b-instruct'
         });
         const cleanTitle = (title || '').trim().replace(/^["']|["']$/g, '');
         return cleanTitle || 'New Chat';

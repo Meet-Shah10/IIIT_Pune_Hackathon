@@ -13,7 +13,8 @@ const ChatSession = require('./models/ChatSession');
 const memoryRoutes = require('./routes/memoryRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
-const userIdMiddleware = require('./middleware/userId');
+const authRoutes = require('./routes/authRoutes');
+const authMiddleware = require('./middleware/authMiddleware');
 const { startMemoryCleanupCron } = require('./services/memoryCleanup');
 
 const app = express();
@@ -22,7 +23,6 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(userIdMiddleware);
 
 // DB connection
 connectDB();
@@ -34,13 +34,8 @@ function buildChatSessionId() {
 // -------------------------------------------------------------------
 // Session creation endpoint for the new-chat flow
 // -------------------------------------------------------------------
-app.post('/api/chat/sessions', async (req, res) => {
-  const { userId } = req.body;
-  const resolvedUserId = userId || req.headers['x-user-id'];
-
-  if (!resolvedUserId) {
-    return res.status(400).json({ error: 'User ID is required' });
-  }
+app.post('/api/chat/sessions', authMiddleware, async (req, res) => {
+  const resolvedUserId = req.user._id.toString();
 
   const sessionId = buildChatSessionId();
   try {
@@ -56,9 +51,9 @@ app.post('/api/chat/sessions', async (req, res) => {
   }
 });
 
-// GET /api/chat/sessions/:userId
-app.get('/api/chat/sessions/:userId', async (req, res) => {
-  const { userId } = req.params;
+// GET /api/chat/sessions (gets sessions for the logged in user)
+app.get('/api/chat/sessions', authMiddleware, async (req, res) => {
+  const userId = req.user._id.toString();
   try {
     const sessions = await ChatSession.find({ userId }).sort({ createdAt: -1 });
     return res.json(sessions);
@@ -69,11 +64,15 @@ app.get('/api/chat/sessions/:userId', async (req, res) => {
 });
 
 // DELETE /api/chat/sessions/:sessionId
-app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
+app.delete('/api/chat/sessions/:sessionId', authMiddleware, async (req, res) => {
   const { sessionId } = req.params;
+  const userId = req.user._id.toString();
   try {
-    // 1. Delete the chat session record
-    await ChatSession.deleteOne({ sessionId });
+    // 1. Delete the chat session record, ensuring it belongs to the user
+    const deletedSession = await ChatSession.findOneAndDelete({ sessionId, userId });
+    if (!deletedSession) {
+      return res.status(404).json({ error: 'Session not found or not authorized' });
+    }
 
     // 2. Delete all messages associated with the session
     await Message.deleteMany({ sessionId });
@@ -97,11 +96,12 @@ app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
 // -------------------------------------------------------------------
 // Primary chat endpoint – now respects memory & session history
 // -------------------------------------------------------------------
-app.post('/api/chat', async (req, res) => {
-  const { userId, sessionId, message, memoryEnabled, useContext, language } = req.body;
+app.post('/api/chat', authMiddleware, async (req, res) => {
+  const { sessionId, message, memoryEnabled, useContext, language } = req.body;
+  const userId = req.user._id.toString();
   console.log('Payload received:', req.body);
 
-  if (!userId || !sessionId || !message) {
+  if (!sessionId || !message) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -245,7 +245,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
 });
 
 // GET endpoint to retrieve session chat history
-app.get('/api/chat/history/:sessionId', async (req, res) => {
+app.get('/api/chat/history/:sessionId', authMiddleware, async (req, res) => {
   const { sessionId } = req.params;
   try {
     const history = await Message.find({ sessionId }).sort({ createdAt: 1 });
@@ -259,9 +259,10 @@ app.get('/api/chat/history/:sessionId', async (req, res) => {
 // -------------------------------------------------------------------
 // Memory CRUD endpoints (future dashboard)
 // -------------------------------------------------------------------
-app.use('/api/memories', memoryRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/memories', authMiddleware, memoryRoutes);
+app.use('/api/dashboard', authMiddleware, dashboardRoutes);
+app.use('/api/settings', authMiddleware, settingsRoutes);
 
 // Start cron jobs
 startMemoryCleanupCron();
