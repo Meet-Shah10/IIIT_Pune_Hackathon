@@ -124,28 +124,27 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
       } catch { return 'en-US' }
     })()
 
-    let finalTranscript = ''
+    const initialText = inputValue.trim()
+    const prefix = initialText ? initialText + ' ' : ''
 
     recognition.onresult = (event) => {
-      let interim = ''
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      let finalTranscript = ''
+      let interimTranscript = ''
+
+      for (let i = 0; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript
+          finalTranscript += transcript
         } else {
-          interim += event.results[i][0].transcript
+          interimTranscript += transcript
         }
       }
-      setInputValue((prev) => {
-        const base = finalTranscript || prev
-        return (base + interim).trim()
-      })
+
+      setInputValue(prefix + (finalTranscript + interimTranscript).trimStart())
     }
 
     recognition.onend = () => {
       setIsListening(false)
-      if (finalTranscript) {
-        setInputValue(finalTranscript.trim())
-      }
     }
 
     recognition.onerror = (e) => {

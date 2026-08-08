@@ -83,7 +83,7 @@ async function generateSessionTitle(firstPrompt) {
         const title = await chatCompletion(messages, {
             temperature: 0.1,
             max_tokens: 20,
-            model: 'nvidia/nemotron-mini-4b-instruct'
+            model: 'nvidia/nvidia-nemotron-nano-9b-v2'
         });
         return title.trim().replace(/^["']|["']$/g, '');
     } catch (err) {
