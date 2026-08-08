@@ -54,6 +54,9 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setToken(null);
+    setUser(null);
+    // Navigate to landing page — use window.location so it works outside Router context too
+    window.location.href = '/';
   };
 
   return (
