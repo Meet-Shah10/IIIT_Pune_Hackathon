@@ -44,7 +44,7 @@ export function Sidebar() {
 
   const handleNewChat = () => {
     // Navigate to chat first, then trigger the new-chat handler
-    navigate('/')
+    navigate('/app')
     // Small delay so ChatPage mounts and registers its handler if not already
     setTimeout(() => triggerNewChat(), 50)
   }
@@ -128,8 +128,8 @@ export function Sidebar() {
 
         {/* Primary Links */}
         <div className="px-4 mt-4 space-y-0.5">
-          <NavLink
-            to="/"
+            <NavLink
+            to="/app"
             end
             onClick={(e) => {
               e.preventDefault();
@@ -147,7 +147,7 @@ export function Sidebar() {
           </NavLink>
 
           <NavLink
-            to="/dashboard"
+            to="/app/dashboard"
             className={({ isActive }) =>
               `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
                 ? 'bg-zinc-200/50 text-zinc-900'
@@ -160,7 +160,7 @@ export function Sidebar() {
           </NavLink>
 
           <NavLink
-            to="/timeline"
+            to="/app/timeline"
             className={({ isActive }) =>
               `flex items-center space-x-3 px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium ${isActive
                 ? 'bg-zinc-200/50 text-zinc-900'
@@ -198,7 +198,7 @@ export function Sidebar() {
                   <button
                     onClick={() => {
                       selectSession(s.sessionId)
-                      navigate('/')
+                      navigate('/app')
                     }}
                     className="flex-1 text-left text-sm truncate font-medium bg-transparent border-0 p-0 focus:outline-none"
                   >

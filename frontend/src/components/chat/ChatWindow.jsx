@@ -42,12 +42,37 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage,
   const [inputValue, setInputValue] = useState('')
   const [storeMemories, setStoreMemories] = useState(true)
   const [useProfile, setUseProfile] = useState(true)
+  const [showSensitivityShield, setShowSensitivityShield] = useState(false)
+  const [pendingMessage, setPendingMessage] = useState('')
   const [isListening, setIsListening] = useState(false)
   const endRef = useRef(null)
   const textareaRef = useRef(null)
   const recognitionRef = useRef(null)
+  const rememberButtonRef = useRef(null)
+  const turnOffButtonRef = useRef(null)
   const [showMascotReminder, setShowMascotReminder] = useState(true)
   const isFirstRender = useRef(true)
+
+  const SENSITIVE_PATTERNS = [
+    /\bstress(ed|ful)?\b/i,
+    /\banxious|anxiety|panic\b/i,
+    /\boverwhelm(ed|ing)?\b/i,
+    /\bgrief|grieving|loss|bereave(d|ment)?\b/i,
+    /\bdepress(ed|ion)?\b/i,
+    /\bburn(ed)?\s*out|burnout\b/i,
+    /\btrauma|traumatic\b/i,
+    /\blonely|alone\b/i,
+    /\bstruggling|struggle\b/i,
+    /\bmental\s+health\b/i,
+    /\bnot\s+okay\b/i,
+    /\bfeeling\s+low\b/i
+  ]
+
+  const isSensitiveMoment = (text) => {
+    const value = text?.trim()
+    if (!value) return false
+    return SENSITIVE_PATTERNS.some((pattern) => pattern.test(value))
+  }
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -83,6 +108,23 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage,
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (showSensitivityShield) {
+      rememberButtonRef.current?.focus()
+    }
+  }, [showSensitivityShield])
+
+  useEffect(() => {
+    if (!showSensitivityShield) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [showSensitivityShield])
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -164,13 +206,62 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage,
       recognitionRef.current?.stop()
       setIsListening(false)
     }
+    const content = inputValue.trim()
+    if (storeMemories && isSensitiveMoment(content)) {
+      setPendingMessage(content)
+      setShowSensitivityShield(true)
+      return
+    }
+
     // Read the persisted language selection at submit time
     const savedLang = localStorage.getItem('selectedLanguage')
     const language = savedLang ? JSON.parse(savedLang) : { name: 'English', code: 'en' }
-    onSendMessage({ content: inputValue, memoryEnabled: storeMemories, useContext: useProfile, language })
+    onSendMessage({ content, memoryEnabled: storeMemories, useContext: useProfile, language })
     setInputValue('')
     // Reset height after send
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
+  }
+
+  const sendPendingMessage = (memoryEnabled) => {
+    if (!pendingMessage || isLoading) return
+    const savedLang = localStorage.getItem('selectedLanguage')
+    const language = savedLang ? JSON.parse(savedLang) : { name: 'English', code: 'en' }
+    onSendMessage({
+      content: pendingMessage,
+      memoryEnabled,
+      useContext: useProfile,
+      language
+    })
+    setShowSensitivityShield(false)
+    setPendingMessage('')
+    setInputValue('')
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
+  }
+
+  const handleRememberWithShield = () => {
+    sendPendingMessage(true)
+  }
+
+  const handleTurnOffMemory = () => {
+    setStoreMemories(false)
+    sendPendingMessage(false)
+  }
+
+  const handleShieldKeyDown = (event) => {
+    if (event.key !== 'Tab') return
+
+    if (event.shiftKey) {
+      if (document.activeElement === rememberButtonRef.current) {
+        event.preventDefault()
+        turnOffButtonRef.current?.focus()
+      }
+      return
+    }
+
+    if (document.activeElement === turnOffButtonRef.current) {
+      event.preventDefault()
+      rememberButtonRef.current?.focus()
+    }
   }
 
   const renderMessageWithEvents = (msg, index) => {
@@ -275,7 +366,53 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage,
           </div>
 
           <form onSubmit={handleSubmit} className="relative flex flex-col w-full bg-white border border-zinc-200 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.08)] focus-within:border-zinc-300 focus-within:shadow-[0_12px_40px_rgb(0,0,0,0.12)] transition-all duration-200">
-            
+
+            {showSensitivityShield && (
+              <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/30 backdrop-blur-[2px] px-4">
+                <div
+                  className="w-[min(92vw,23rem)] aspect-square rounded-3xl border border-zinc-200 bg-white p-6 shadow-[0_24px_80px_rgba(0,0,0,0.22)] flex flex-col justify-center text-center"
+                  role="alertdialog"
+                  aria-modal="true"
+                  aria-labelledby="sensitivity-shield-title"
+                  aria-describedby="sensitivity-shield-description"
+                  onKeyDown={handleShieldKeyDown}
+                >
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 text-amber-700 border border-amber-100">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                      <path d="M12 9v4" />
+                      <path d="M12 17h.01" />
+                      <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                    </svg>
+                  </div>
+
+                  <h3 id="sensitivity-shield-title" className="text-sm font-semibold tracking-[0.18em] text-zinc-900 uppercase">
+                    SENSITIVE MOMENT DETECTED
+                  </h3>
+                  <p id="sensitivity-shield-description" className="mt-3 text-sm leading-relaxed text-zinc-600">
+                    Memory is currently ON. This information may be saved as a memory. Are you comfortable with remembering it?
+                  </p>
+
+                  <div className="mt-6 flex flex-col gap-3">
+                    <button
+                      ref={rememberButtonRef}
+                      type="button"
+                      onClick={handleRememberWithShield}
+                      className="w-full rounded-full bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+                    >
+                      Yes, Remember
+                    </button>
+                    <button
+                      ref={turnOffButtonRef}
+                      type="button"
+                      onClick={handleTurnOffMemory}
+                      className="w-full rounded-full bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+                    >
+                      Turn Memory OFF
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Mascot Reminder Bubble (Integrated Incognito Header) */}
             {showMascotReminder && (
               <div className="bg-zinc-50/80 border-b border-zinc-100 px-5 py-3 flex items-center gap-3 w-full animate-in fade-in duration-200">

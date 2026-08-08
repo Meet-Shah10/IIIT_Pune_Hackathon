@@ -12,7 +12,7 @@ export default function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault()
     login(email, 'password')
-    navigate('/')
+    navigate('/app')
   }
 
   return (

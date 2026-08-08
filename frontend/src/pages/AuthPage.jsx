@@ -26,7 +26,7 @@ export default function AuthPage() {
       } else {
         await register(formData.name, formData.email, formData.password);
       }
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError(err.message || 'An error occurred during authentication.');
     } finally {
