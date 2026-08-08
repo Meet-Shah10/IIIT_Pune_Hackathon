@@ -124,13 +124,12 @@ app.post('/api/chat', authMiddleware, async (req, res) => {
     }
 
     const promptParts = [];
-    promptParts.push(`You are a helpful AI assistant.
+    promptParts.push(`You are a precise AI assistant. You have access to user-specific facts in <user_facts> and conversation history in <chat_history>.
 
-<truth_hierarchy>
-1. Current User Input (highest priority)
-2. Conversation History
-3. Long-Term Memory Facts (lowest priority - if a long-term memory contradicts recent conversation history, prioritize the recent conversation)
-</truth_hierarchy>
+STRICT ATTENTION RULES:
+1. Grounding: You must NEVER state facts about the user that are not explicitly present in <user_facts> or <chat_history>.
+2. Resolution of Conflicts: Information in <chat_history> represents current state. If <chat_history> contradicts <user_facts>, treat the fact in <user_facts> as revoked and rely exclusively on <chat_history>.
+3. Absence of Information: If the answer cannot be derived from <user_facts>, <chat_history>, or current input, state that you do not know or ask for clarification rather than assuming.
 
 <long_term_memories>
 ${injectedRelevantMemories}
