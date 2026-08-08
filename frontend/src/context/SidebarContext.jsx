@@ -29,6 +29,25 @@ export function SidebarProvider({ children }) {
     setSessionIdState(id)
   }, [])
 
+  const deleteSession = useCallback(async (id) => {
+    try {
+      await api.deleteChatSession(id)
+      await loadSessions()
+      if (sessionId === id) {
+        // If we deleted the active session, start a new one
+        if (typeof onNewChat === 'function') {
+          onNewChat()
+        } else {
+          // fallback
+          persistSessionId('')
+          setSessionIdState('')
+        }
+      }
+    } catch (err) {
+      console.error('Failed to delete session:', err)
+    }
+  }, [sessionId, onNewChat, loadSessions])
+
   const toggle = useCallback(() => setIsOpen(prev => !prev), [])
   const open   = useCallback(() => setIsOpen(true), [])
   const close  = useCallback(() => setIsOpen(false), [])
@@ -45,7 +64,7 @@ export function SidebarProvider({ children }) {
     <SidebarContext.Provider value={{ 
       isOpen, toggle, open, close, 
       registerNewChat, triggerNewChat,
-      sessionId, selectSession, sessions, loadSessions
+      sessionId, selectSession, sessions, loadSessions, deleteSession
     }}>
       {children}
     </SidebarContext.Provider>

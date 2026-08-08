@@ -68,4 +68,28 @@ Rules:
     }
 }
 
-module.exports = { extractMemoryAndRespond };
+async function generateSessionTitle(firstPrompt) {
+    try {
+        const messages = [
+            {
+                role: 'system',
+                content: 'You are a chat title generator. Generate a concise, suitable topic title (maximum 3-5 words) based on the user prompt. Return ONLY the title text, with no quotes, formatting, or extra words.'
+            },
+            {
+                role: 'user',
+                content: firstPrompt
+            }
+        ];
+        const title = await chatCompletion(messages, {
+            temperature: 0.1,
+            max_tokens: 20,
+            model: 'nvidia/nemotron-mini-4b-instruct'
+        });
+        return title.trim().replace(/^["']|["']$/g, '');
+    } catch (err) {
+        console.error('Failed to generate session title:', err);
+        return 'New Chat';
+    }
+}
+
+module.exports = { extractMemoryAndRespond, generateSessionTitle };

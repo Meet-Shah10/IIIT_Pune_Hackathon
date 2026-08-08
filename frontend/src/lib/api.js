@@ -105,6 +105,16 @@ export const api = {
     return res.json();
   },
 
+  // Delete a chat session and associated messages/memories
+  deleteChatSession: async (sessionId) => {
+    const res = await fetch(`${API_BASE}/chat/sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': USER_ID },
+    });
+    if (!res.ok) throw new Error('Failed to delete chat session');
+    return res.json();
+  },
+
   // Get aggregated dashboard stats
   getDashboardStats: async () => {
     const res = await fetch(`${API_BASE}/dashboard/stats/${USER_ID}`, {

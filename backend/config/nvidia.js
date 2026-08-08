@@ -7,9 +7,9 @@ require('dotenv').config();
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 async function chatCompletion(messages, options = {}) {
-    const { temperature, max_tokens, response_format, jsonMode } = options;
+    const { temperature, max_tokens, response_format, jsonMode, model } = options;
     const body = {
-        model: module.exports.DEFAULT_MODEL,
+        model: model || module.exports.DEFAULT_MODEL,
         messages,
         ...(temperature !== undefined ? { temperature } : {}),
         ...(max_tokens !== undefined ? { max_tokens } : {}),

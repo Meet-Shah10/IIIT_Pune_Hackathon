@@ -3,7 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
-const { extractMemoryAndRespond } = require('./services/memoryService');
+const { extractMemoryAndRespond, generateSessionTitle } = require('./services/memoryService');
 const { classifySensitivity } = require('./services/privacyClassifier');
 const Memory = require('./models/Memory');
 const MemoryEvent = require('./models/MemoryEvent');
@@ -65,6 +65,32 @@ app.get('/api/chat/sessions/:userId', async (req, res) => {
   } catch (err) {
     console.error('Error fetching sessions:', err);
     return res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+});
+
+// DELETE /api/chat/sessions/:sessionId
+app.delete('/api/chat/sessions/:sessionId', async (req, res) => {
+  const { sessionId } = req.params;
+  try {
+    // 1. Delete the chat session record
+    await ChatSession.deleteOne({ sessionId });
+
+    // 2. Delete all messages associated with the session
+    await Message.deleteMany({ sessionId });
+
+    // 3. Find and delete memories extracted from this session, and delete their events
+    const memories = await Memory.find({ sessionId });
+    const memoryIds = memories.map(m => m._id);
+
+    if (memoryIds.length > 0) {
+      await Memory.deleteMany({ _id: { $in: memoryIds } });
+      await MemoryEvent.deleteMany({ memoryId: { $in: memoryIds } });
+    }
+
+    return res.json({ success: true, message: 'Session and associated messages/memories deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting session:', err);
+    return res.status(500).json({ error: 'Failed to delete session' });
   }
 });
 
@@ -133,12 +159,12 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
       wasFactExtracted: Boolean(extracted?.negotiation_prompt),
     });
 
-    // Update Session Title to first message if it's currently default
+    // Update Session Title to a generated summary if it's currently default
     try {
       const session = await ChatSession.findOne({ sessionId });
       if (session && session.title === 'New Chat') {
-        const cleanTitle = message.split(' ').slice(0, 5).join(' ') + (message.split(' ').length > 5 ? '...' : '');
-        session.title = cleanTitle || 'New Chat';
+        const aiTitle = await generateSessionTitle(message);
+        session.title = aiTitle || 'New Chat';
         await session.save();
       }
     } catch (err) {
@@ -182,6 +208,7 @@ Instruction: Rely ONLY on the provided memories for personal user facts. Do not 
         source: classification.source || 'chat',
         expiresAt,
         autoDelete: true,
+        sessionId,
       });
 
       await MemoryEvent.create({

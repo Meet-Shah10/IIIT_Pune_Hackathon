@@ -11,6 +11,7 @@ const MemorySchema = new mongoose.Schema({
   status: { type: String, enum: ['active', 'archived'], default: 'active' },
   expiresAt: { type: Date },
   autoDelete: { type: Boolean, default: true },
+  sessionId: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Memory', MemorySchema);

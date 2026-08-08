@@ -2,13 +2,13 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import {
   Plus, Monitor, LayoutDashboard, GitCommit, Settings,
-  ChevronDown, Bell, PanelLeftClose, PanelLeftOpen, X
+  ChevronDown, Bell, PanelLeftClose, PanelLeftOpen, X, Trash2
 } from 'lucide-react'
 import { useSidebar } from '../../context/SidebarContext'
 import { api } from '../../lib/api'
 
 export function Sidebar() {
-  const { isOpen, toggle, triggerNewChat, sessionId, selectSession, sessions } = useSidebar()
+  const { isOpen, toggle, triggerNewChat, sessionId, selectSession, sessions, deleteSession } = useSidebar()
   const navigate = useNavigate()
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -176,20 +176,36 @@ export function Sidebar() {
             {sessions.map((s) => {
               const isActive = s.sessionId === sessionId
               return (
-                <button
+                <div
                   key={s.sessionId}
-                  onClick={() => {
-                    selectSession(s.sessionId)
-                    navigate('/')
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors truncate font-medium ${
+                  className={`group/session flex items-center justify-between px-3 py-1.5 rounded-md transition-colors ${
                     isActive
                       ? 'bg-zinc-200 text-zinc-900'
                       : 'text-zinc-600 hover:bg-zinc-200/50 hover:text-zinc-900'
                   }`}
                 >
-                  {s.title}
-                </button>
+                  <button
+                    onClick={() => {
+                      selectSession(s.sessionId)
+                      navigate('/')
+                    }}
+                    className="flex-1 text-left text-sm truncate font-medium bg-transparent border-0 p-0 focus:outline-none"
+                  >
+                    {s.title}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Are you sure you want to delete this chat session? All messages and associated memories will be deleted.')) {
+                        deleteSession(s.sessionId);
+                      }
+                    }}
+                    className="opacity-0 group-hover/session:opacity-100 p-1 text-zinc-400 hover:text-red-600 hover:bg-zinc-300/40 rounded transition-all ml-1 flex-shrink-0"
+                    title="Delete chat session"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               )
             })}
             {sessions.length === 0 && (
