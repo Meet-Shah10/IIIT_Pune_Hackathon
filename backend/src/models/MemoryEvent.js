@@ -39,10 +39,6 @@ const memoryEventSchema = new mongoose.Schema({
   savedAt: {
     type: Date,
     default: null
-  },
-  confidenceScore: {
-    type: Number,
-    default: 90
   }
 }, { timestamps: true })
 

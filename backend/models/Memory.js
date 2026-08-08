@@ -12,7 +12,6 @@ const MemorySchema = new mongoose.Schema({
   expiresAt: { type: Date },
   autoDelete: { type: Boolean, default: true },
   sessionId: { type: String, default: null },
-  confidenceScore: { type: Number, default: 90 },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Memory', MemorySchema);

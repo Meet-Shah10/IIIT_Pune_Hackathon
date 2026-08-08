@@ -10,7 +10,6 @@ const MemoryEventSchema = new mongoose.Schema({
   memoryContent: { type: String, default: '' },
   memoryCategory: { type: String, default: 'general' },
   memorySensitivity: { type: String, default: 'low' },
-  confidenceScore: { type: Number, default: 90 },
   savedAt: { type: Date, default: null },
 }, { timestamps: true });
 

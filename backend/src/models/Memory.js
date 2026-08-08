@@ -41,10 +41,6 @@ const memorySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Message',
     required: false
-  },
-  confidenceScore: {
-    type: Number,
-    default: 90
   }
 }, { timestamps: true })
 
