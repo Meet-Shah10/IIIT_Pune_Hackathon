@@ -42,8 +42,10 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
   const [inputValue, setInputValue] = useState('')
   const [storeMemories, setStoreMemories] = useState(true)
   const [useProfile, setUseProfile] = useState(true)
+  const [isListening, setIsListening] = useState(false)
   const endRef = useRef(null)
   const textareaRef = useRef(null)
+  const recognitionRef = useRef(null)
   const [showMascotReminder, setShowMascotReminder] = useState(true)
   const isFirstRender = useRef(true)
 
@@ -98,9 +100,71 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
     autoResize()
   }, [inputValue, autoResize])
 
+  const toggleSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.')
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+      return
+    }
+
+    const recognition = new SpeechRecognition()
+    recognitionRef.current = recognition
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = (() => {
+      try {
+        const saved = localStorage.getItem('selectedLanguage')
+        return saved ? JSON.parse(saved).code || 'en-US' : 'en-US'
+      } catch { return 'en-US' }
+    })()
+
+    let finalTranscript = ''
+
+    recognition.onresult = (event) => {
+      let interim = ''
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript
+        } else {
+          interim += event.results[i][0].transcript
+        }
+      }
+      setInputValue((prev) => {
+        const base = finalTranscript || prev
+        return (base + interim).trim()
+      })
+    }
+
+    recognition.onend = () => {
+      setIsListening(false)
+      if (finalTranscript) {
+        setInputValue(finalTranscript.trim())
+      }
+    }
+
+    recognition.onerror = (e) => {
+      console.error('Speech recognition error:', e.error)
+      setIsListening(false)
+    }
+
+    recognition.start()
+    setIsListening(true)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!inputValue.trim() || isLoading) return
+    // Stop listening before sending
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+    }
     // Read the persisted language selection at submit time
     const savedLang = localStorage.getItem('selectedLanguage')
     const language = savedLang ? JSON.parse(savedLang) : { name: 'English', code: 'en' }
@@ -283,8 +347,20 @@ export default function ChatWindow({ messages, events, isLoading, onSendMessage 
               </div>
 
               <div className="flex items-center gap-2">
-                <button type="button" className="p-2 text-zinc-400 hover:text-zinc-700 transition-colors">
-                  <Mic className="w-4 h-4" />
+                <button
+                  type="button"
+                  onClick={toggleSpeechRecognition}
+                  title={isListening ? 'Stop recording' : 'Start voice input'}
+                  className={`p-2 rounded-full transition-all duration-200 relative ${
+                    isListening
+                      ? 'text-white bg-red-500 hover:bg-red-600 shadow-md'
+                      : 'text-zinc-400 hover:text-zinc-700'
+                  }`}
+                >
+                  {isListening && (
+                    <span className="absolute inset-0 rounded-full bg-red-400 animate-ping opacity-60" />
+                  )}
+                  <Mic className="w-4 h-4 relative z-10" />
                 </button>
                 <button type="submit" disabled={!inputValue.trim() || isLoading} className="w-8 h-8 flex items-center justify-center bg-zinc-900 text-white hover:bg-zinc-800 rounded-full transition-colors disabled:opacity-50 disabled:bg-zinc-200 disabled:text-zinc-400">
                   <ArrowUp className="w-4 h-4" />
